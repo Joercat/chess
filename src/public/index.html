@@ -73,7 +73,6 @@ function generateAIMove(level) {
     let bestMove = null;
     let bestScore = -Infinity;
     
-    // Different evaluation depths based on AI level
     const depth = level;
     
     for(let i = 0; i < 8; i++) {
@@ -174,7 +173,6 @@ function generateLegalMoves(x, y) {
     
     switch(piece.type) {
         case 'pawn':
-            // Implement pawn movement rules
             const direction = piece.color === 'white' ? -1 : 1;
             if(!board[x + direction][y]) {
                 moves.push({x: x + direction, y: y});
@@ -184,7 +182,6 @@ function generateLegalMoves(x, y) {
                     }
                 }
             }
-            // Captures
             if(y > 0 && board[x + direction][y - 1] && board[x + direction][y - 1].color !== piece.color) {
                 moves.push({x: x + direction, y: y - 1});
             }
@@ -192,9 +189,6 @@ function generateLegalMoves(x, y) {
                 moves.push({x: x + direction, y: y + 1});
             }
             break;
-            
-        // Add other piece movement rules
-        // ... (implement rules for other pieces)
     }
     
     return moves;
@@ -228,13 +222,11 @@ function drawBoard() {
     const ctx = canvas.getContext('2d');
     const squareSize = canvas.width / 8;
     
-    // Draw squares
     for(let i = 0; i < 8; i++) {
         for(let j = 0; j < 8; j++) {
             ctx.fillStyle = (i + j) % 2 === 0 ? '#ffffff' : '#808080';
             ctx.fillRect(j * squareSize, i * squareSize, squareSize, squareSize);
             
-            // Draw pieces
             if(board[i][j]) {
                 ctx.fillStyle = board[i][j].color;
                 ctx.font = '40px Arial';
