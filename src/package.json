@@ -1,0 +1,16 @@
+{
+  "name": "websocket-chess",
+  "version": "1.0.0",
+  "description": "A real-time chess game using WebSocket",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
