@@ -112,16 +112,25 @@ function initializeBoard() {
 function getPieceSymbol(type, color) {
     const symbols = {
         white: {
-            king: '♔', queen: '♕', rook: '♖',
-            bishop: '♗', knight: '♘', pawn: '♙'
+            king: '♔',
+            queen: '♕',
+            rook: '♖',
+            bishop: '♗',
+            knight: '♘',
+            pawn: '♙'
         },
         black: {
-            king: '♚', queen: '♛', rook: '♜',
-            bishop: '♝', knight: '♞', pawn: '♟'
+            king: '♚',
+            queen: '♛',
+            rook: '♜',
+            bishop: '♝',
+            knight: '♞',
+            pawn: '♟'
         }
     };
     return symbols[color][type];
 }
+
 
 function drawBoard() {
     const canvas = document.getElementById('chessboard');
@@ -424,4 +433,3 @@ drawBoard();
 </script>
 </body>
 </html>
-
