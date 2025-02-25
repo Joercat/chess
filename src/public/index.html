@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chess Game</title>
+    <style>
+        canvas { 
+            border: 1px solid black;
+            margin: 20px;
+        }
+        .controls {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="startPvP()">Start PvP</button>
+        <button onclick="startAI(1)">AI Level 1</button>
+        <button onclick="startAI(2)">AI Level 2</button>
+        <button onclick="startAI(3)">AI Level 3</button>
+        <button onclick="startAI(4)">AI Level 4</button>
+        <button onclick="startAI(5)">AI Level 5</button>
+    </div>
+    <canvas id="chessboard" width="400" height="400"></canvas>
+
+<script>
+// Chess piece images preloading
+const pieces = {};
+const pieceTypes = ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'];
+const colors = ['white', 'black'];
+
+// Game state
+let board = initializeBoard();
+let selectedPiece = null;
+let isWhiteTurn = true;
+let gameMode = 'local';
+let ws = null;
+let aiLevel = 0;
+
+// Initialize WebSocket connection
+function startPvP() {
+    ws = new WebSocket('ws://localhost:3000');
+    gameMode = 'pvp';
+    
+    ws.onmessage = (event) => {
+        const move = JSON.parse(event.data);
+        makeMove(move.from, move.to);
+    };
+}
+
+// Initialize board
+function initializeBoard() {
+    const board = new Array(8).fill(null).map(() => new Array(8).fill(null));
+    
+    // Set up pawns
+    for(let i = 0; i < 8; i++) {
+        board[1][i] = {type: 'pawn', color: 'black'};
+        board[6][i] = {type: 'pawn', color: 'white'};
+    }
+    
+    // Set up other pieces
+    const backRow = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+    for(let i = 0; i < 8; i++) {
+        board[0][i] = {type: backRow[i], color: 'black'};
+        board[7][i] = {type: backRow[i], color: 'white'};
+    }
+    
+    return board;
+}
+
+// AI move generation based on levels
+function generateAIMove(level) {
+    let bestMove = null;
+    let bestScore = -Infinity;
+    
+    // Different evaluation depths based on AI level
+    const depth = level;
+    
+    for(let i = 0; i < 8; i++) {
+        for(let j = 0; j < 8; j++) {
+            if(board[i][j] && board[i][j].color === 'black') {
+                const legalMoves = generateLegalMoves(i, j);
+                
+                for(const move of legalMoves) {
+                    const tempBoard = JSON.parse(JSON.stringify(board));
+                    makeMove({x: i, y: j}, move);
+                    
+                    const score = minimax(depth, false);
+                    
+                    if(score > bestScore) {
+                        bestScore = score;
+                        bestMove = {from: {x: i, y: j}, to: move};
+                    }
+                    
+                    board = tempBoard;
+                }
+            }
+        }
+    }
+    
+    return bestMove;
+}
+
+// Minimax algorithm for AI
+function minimax(depth, isMaximizing) {
+    if(depth === 0) {
+        return evaluatePosition();
+    }
+    
+    if(isMaximizing) {
+        let maxScore = -Infinity;
+        for(let i = 0; i < 8; i++) {
+            for(let j = 0; j < 8; j++) {
+                if(board[i][j] && board[i][j].color === 'black') {
+                    const legalMoves = generateLegalMoves(i, j);
+                    for(const move of legalMoves) {
+                        const tempBoard = JSON.parse(JSON.stringify(board));
+                        makeMove({x: i, y: j}, move);
+                        maxScore = Math.max(maxScore, minimax(depth - 1, false));
+                        board = tempBoard;
+                    }
+                }
+            }
+        }
+        return maxScore;
+    } else {
+        let minScore = Infinity;
+        for(let i = 0; i < 8; i++) {
+            for(let j = 0; j < 8; j++) {
+                if(board[i][j] && board[i][j].color === 'white') {
+                    const legalMoves = generateLegalMoves(i, j);
+                    for(const move of legalMoves) {
+                        const tempBoard = JSON.parse(JSON.stringify(board));
+                        makeMove({x: i, y: j}, move);
+                        minScore = Math.min(minScore, minimax(depth - 1, true));
+                        board = tempBoard;
+                    }
+                }
+            }
+        }
+        return minScore;
+    }
+}
+
+// Position evaluation for AI
+function evaluatePosition() {
+    const pieceValues = {
+        'pawn': 1,
+        'knight': 3,
+        'bishop': 3,
+        'rook': 5,
+        'queen': 9,
+        'king': 100
+    };
+    
+    let score = 0;
+    
+    for(let i = 0; i < 8; i++) {
+        for(let j = 0; j < 8; j++) {
+            if(board[i][j]) {
+                const multiplier = board[i][j].color === 'black' ? 1 : -1;
+                score += pieceValues[board[i][j].type] * multiplier;
+            }
+        }
+    }
+    
+    return score;
+}
+
+// Generate legal moves for a piece
+function generateLegalMoves(x, y) {
+    const piece = board[x][y];
+    const moves = [];
+    
+    switch(piece.type) {
+        case 'pawn':
+            // Implement pawn movement rules
+            const direction = piece.color === 'white' ? -1 : 1;
+            if(!board[x + direction][y]) {
+                moves.push({x: x + direction, y: y});
+                if((piece.color === 'white' && x === 6) || (piece.color === 'black' && x === 1)) {
+                    if(!board[x + 2 * direction][y]) {
+                        moves.push({x: x + 2 * direction, y: y});
+                    }
+                }
+            }
+            // Captures
+            if(y > 0 && board[x + direction][y - 1] && board[x + direction][y - 1].color !== piece.color) {
+                moves.push({x: x + direction, y: y - 1});
+            }
+            if(y < 7 && board[x + direction][y + 1] && board[x + direction][y + 1].color !== piece.color) {
+                moves.push({x: x + direction, y: y + 1});
+            }
+            break;
+            
+        // Add other piece movement rules
+        // ... (implement rules for other pieces)
+    }
+    
+    return moves;
+}
+
+// Make a move on the board
+function makeMove(from, to) {
+    board[to.x][to.y] = board[from.x][from.y];
+    board[from.x][from.y] = null;
+    isWhiteTurn = !isWhiteTurn;
+    
+    if(gameMode === 'pvp' && ws) {
+        ws.send(JSON.stringify({from, to}));
+    }
+    
+    drawBoard();
+    
+    if(gameMode === 'ai' && !isWhiteTurn) {
+        setTimeout(() => {
+            const aiMove = generateAIMove(aiLevel);
+            if(aiMove) {
+                makeMove(aiMove.from, aiMove.to);
+            }
+        }, 500);
+    }
+}
+
+// Draw the board
+function drawBoard() {
+    const canvas = document.getElementById('chessboard');
+    const ctx = canvas.getContext('2d');
+    const squareSize = canvas.width / 8;
+    
+    // Draw squares
+    for(let i = 0; i < 8; i++) {
+        for(let j = 0; j < 8; j++) {
+            ctx.fillStyle = (i + j) % 2 === 0 ? '#ffffff' : '#808080';
+            ctx.fillRect(j * squareSize, i * squareSize, squareSize, squareSize);
+            
+            // Draw pieces
+            if(board[i][j]) {
+                ctx.fillStyle = board[i][j].color;
+                ctx.font = '40px Arial';
+                ctx.fillText(getPieceSymbol(board[i][j].type), j * squareSize + 10, (i + 1) * squareSize - 10);
+            }
+        }
+    }
+}
+
+// Get Unicode chess symbols
+function getPieceSymbol(type) {
+    const symbols = {
+        'king': '♔',
+        'queen': '♕',
+        'rook': '♖',
+        'bishop': '♗',
+        'knight': '♘',
+        'pawn': '♙'
+    };
+    return symbols[type];
+}
+
+// Initialize the game
+drawBoard();
+
+// Handle clicks
+document.getElementById('chessboard').addEventListener('click', (e) => {
+    const canvas = document.getElementById('chessboard');
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientY - rect.top) / (canvas.height / 8));
+    const y = Math.floor((e.clientX - rect.left) / (canvas.width / 8));
+    
+    if(!selectedPiece) {
+        if(board[x][y] && board[x][y].color === (isWhiteTurn ? 'white' : 'black')) {
+            selectedPiece = {x, y};
+        }
+    } else {
+        const legalMoves = generateLegalMoves(selectedPiece.x, selectedPiece.y);
+        if(legalMoves.some(move => move.x === x && move.y === y)) {
+            makeMove(selectedPiece, {x, y});
+        }
+        selectedPiece = null;
+    }
+});
+
+function startAI(level) {
+    gameMode = 'ai';
+    aiLevel = level;
+    board = initializeBoard();
+    isWhiteTurn = true;
+    drawBoard();
+}
+</script>
+</body>
+</html>
