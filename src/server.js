@@ -1,10 +1,11 @@
 const WebSocket = require('ws');
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
 
 const server = http.createServer((req, res) => {
   if (req.url === '/') {
-    fs.readFile('chess.html', (err, data) => {
+    fs.readFile(path.join(__dirname, 'public', 'index.html'), (err, data) => {
       res.writeHead(200, {'Content-Type': 'text/html'});
       res.end(data);
     });
@@ -12,7 +13,6 @@ const server = http.createServer((req, res) => {
 });
 
 const wss = new WebSocket.Server({ server });
-
 const clients = new Map();
 
 wss.on('connection', (ws) => {
@@ -21,8 +21,6 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message) => {
     const data = JSON.parse(message);
-    
-    // Broadcast moves to opponent
     clients.forEach((clientId, client) => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(data));
