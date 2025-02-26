@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const app = express();
 const port = process.env.PORT || 10000;
 
-// Serve static files
+// Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Create HTTP server
@@ -14,12 +14,14 @@ const server = app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
 
-// WebSocket server
+// WebSocket server setup
 const wss = new WebSocket.Server({ server });
 
+// Game state management
 const rooms = new Map();
 const connections = new Set();
 
+// WebSocket connection handling
 wss.on('connection', (ws) => {
     connections.add(ws);
     console.log('New client connected');
@@ -33,8 +35,11 @@ wss.on('connection', (ws) => {
                 rooms.set(roomId, {
                     host: ws,
                     players: [ws],
-                    moves: [],
-                    gameState: 'waiting'
+                    gameState: {
+                        board: null,
+                        currentTurn: 'white',
+                        moves: []
+                    }
                 });
                 ws.roomId = roomId;
                 ws.send(JSON.stringify({
@@ -43,41 +48,40 @@ wss.on('connection', (ws) => {
                     color: 'white'
                 }));
                 break;
-                
+
             case 'join':
-                if (rooms.has(data.roomId)) {
-                    const room = rooms.get(data.roomId);
-                    if (room.players.length < 2) {
-                        room.players.push(ws);
-                        room.guest = ws;
-                        ws.roomId = data.roomId;
-                        room.gameState = 'playing';
-                        
-                        ws.send(JSON.stringify({
-                            type: 'joinedRoom',
-                            color: 'black',
-                            roomId: data.roomId
-                        }));
-                        
-                        room.host.send(JSON.stringify({
-                            type: 'playerJoined',
-                            gameState: 'playing'
-                        }));
-                    }
+                const room = rooms.get(data.roomId);
+                if (room && room.players.length < 2) {
+                    room.players.push(ws);
+                    ws.roomId = data.roomId;
+                    
+                    ws.send(JSON.stringify({
+                        type: 'joinedRoom',
+                        color: 'black',
+                        gameState: room.gameState
+                    }));
+                    
+                    room.host.send(JSON.stringify({
+                        type: 'playerJoined'
+                    }));
                 }
                 break;
-                
+
             case 'move':
-                if (rooms.has(data.roomId)) {
-                    const room = rooms.get(data.roomId);
-                    const opponent = ws === room.host ? room.guest : room.host;
-                    if (opponent) {
-                        room.moves.push(data.move);
-                        opponent.send(JSON.stringify({
-                            type: 'move',
-                            move: data.move
-                        }));
-                    }
+                const gameRoom = rooms.get(data.roomId);
+                if (gameRoom) {
+                    gameRoom.gameState.moves.push(data.move);
+                    gameRoom.gameState.currentTurn = data.move.color === 'white' ? 'black' : 'white';
+                    
+                    // Broadcast move to other player
+                    gameRoom.players.forEach(player => {
+                        if (player !== ws) {
+                            player.send(JSON.stringify({
+                                type: 'move',
+                                move: data.move
+                            }));
+                        }
+                    });
                 }
                 break;
         }
@@ -92,12 +96,9 @@ wss.on('connection', (ws) => {
             if (room.players.length === 0) {
                 rooms.delete(ws.roomId);
             } else {
-                room.players.forEach(player => {
-                    player.send(JSON.stringify({
-                        type: 'opponentLeft',
-                        message: 'Opponent disconnected'
-                    }));
-                });
+                room.players[0].send(JSON.stringify({
+                    type: 'opponentLeft'
+                }));
             }
         }
         console.log('Client disconnected');
@@ -106,10 +107,14 @@ wss.on('connection', (ws) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'healthy', connections: connections.size, rooms: rooms.size });
+    res.status(200).json({
+        status: 'healthy',
+        connections: connections.size,
+        rooms: rooms.size
+    });
 });
 
-// Serve the game client
+// Serve the main game page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
