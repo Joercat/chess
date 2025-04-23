@@ -1,120 +1,60 @@
-const WebSocket = require('ws');
 const express = require('express');
-const path = require('path');
-const crypto = require('crypto');
-
 const app = express();
-const port = process.env.PORT || 10000;
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
+const rooms = new Map();
 
-// Create HTTP server
-const server = app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
 });
 
-// WebSocket server setup
-const wss = new WebSocket.Server({ server });
+io.on('connection', (socket) => {
+    socket.on('createRoom', () => {
+        const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        rooms.set(roomCode, { players: [socket.id], game: new Chess() });
+        socket.join(roomCode);
+        socket.emit('roomCreated', roomCode);
+    });
 
-// Game state management
-const rooms = new Map();
-const connections = new Set();
-
-// WebSocket connection handling
-wss.on('connection', (ws) => {
-    connections.add(ws);
-    console.log('New client connected');
-
-    ws.on('message', (message) => {
-        const data = JSON.parse(message);
-        
-        switch(data.type) {
-            case 'create':
-                const roomId = crypto.randomBytes(3).toString('hex');
-                rooms.set(roomId, {
-                    host: ws,
-                    players: [ws],
-                    gameState: {
-                        board: null,
-                        currentTurn: 'white',
-                        moves: []
-                    }
-                });
-                ws.roomId = roomId;
-                ws.send(JSON.stringify({
-                    type: 'roomCreated',
-                    roomId,
-                    color: 'white'
-                }));
-                break;
-
-            case 'join':
-                const room = rooms.get(data.roomId);
-                if (room && room.players.length < 2) {
-                    room.players.push(ws);
-                    ws.roomId = data.roomId;
-                    
-                    ws.send(JSON.stringify({
-                        type: 'joinedRoom',
-                        color: 'black',
-                        gameState: room.gameState
-                    }));
-                    
-                    room.host.send(JSON.stringify({
-                        type: 'playerJoined'
-                    }));
-                }
-                break;
-
-            case 'move':
-                const gameRoom = rooms.get(data.roomId);
-                if (gameRoom) {
-                    gameRoom.gameState.moves.push(data.move);
-                    gameRoom.gameState.currentTurn = data.move.color === 'white' ? 'black' : 'white';
-                    
-                    // Broadcast move to other player
-                    gameRoom.players.forEach(player => {
-                        if (player !== ws) {
-                            player.send(JSON.stringify({
-                                type: 'move',
-                                move: data.move
-                            }));
-                        }
-                    });
-                }
-                break;
+    socket.on('joinRoom', (roomCode) => {
+        const room = rooms.get(roomCode);
+        if (room && room.players.length < 2) {
+            room.players.push(socket.id);
+            socket.join(roomCode);
+            socket.emit('joinedRoom', roomCode);
+            io.to(roomCode).emit('gameStart', { white: room.players[0], black: room.players[1] });
+        } else {
+            socket.emit('roomError', 'Room not found or full');
         }
     });
 
-    ws.on('close', () => {
-        connections.delete(ws);
-        if (ws.roomId && rooms.has(ws.roomId)) {
-            const room = rooms.get(ws.roomId);
-            room.players = room.players.filter(player => player !== ws);
-            
-            if (room.players.length === 0) {
-                rooms.delete(ws.roomId);
-            } else {
-                room.players[0].send(JSON.stringify({
-                    type: 'opponentLeft'
-                }));
+    socket.on('move', ({ from, to, roomCode }) => {
+        const room = rooms.get(roomCode);
+        if (room) {
+            const move = room.game.move({ from, to });
+            if (move) {
+                io.to(roomCode).emit('moveMade', { 
+                    from, 
+                    to, 
+                    fen: room.game.fen(),
+                    move: move
+                });
             }
         }
-        console.log('Client disconnected');
+    });
+
+    socket.on('disconnect', () => {
+        rooms.forEach((room, roomCode) => {
+            if (room.players.includes(socket.id)) {
+                io.to(roomCode).emit('playerLeft');
+                rooms.delete(roomCode);
+            }
+        });
     });
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({
-        status: 'healthy',
-        connections: connections.size,
-        rooms: rooms.size
-    });
-});
-
-// Serve the main game page
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
