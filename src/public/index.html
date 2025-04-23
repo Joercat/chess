@@ -251,20 +251,29 @@
             ).join(''));
         }
 
-        function updateMoveHistory(move) {
-            moveHistory.push(move);
-            const moveHistoryDiv = $('#moveHistory');
-            let html = '';
-            for (let i = 0; i < moveHistory.length; i += 2) {
-                html += `<div class="move-row">
-                    <span class="move-number">${Math.floor(i/2) + 1}.</span>
-                    <span class="move">${moveHistory[i]}</span>
-                    <span class="move">${moveHistory[i+1] || ''}</span>
-                </div>`;
-            }
-            moveHistoryDiv.html(html);
-            moveHistoryDiv.scrollTop(moveHistoryDiv[0].scrollHeight);
+function updateMoveHistory(move) {
+    if (move) {
+        moveHistory.push(move);
+        const moveHistoryDiv = $('#moveHistory');
+        let html = '';
+        const moves = game.history({ verbose: true });
+        
+        for (let i = 0; i < moves.length; i += 2) {
+            const moveNumber = Math.floor(i/2) + 1;
+            const whiteMove = moves[i] ? `${moves[i].from}-${moves[i].to}` : '';
+            const blackMove = moves[i+1] ? `${moves[i+1].from}-${moves[i+1].to}` : '';
+            
+            html += `<div class="move-row">
+                <span class="move-number">${moveNumber}.</span>
+                <span class="move">${whiteMove}</span>
+                <span class="move">${blackMove}</span>
+            </div>`;
         }
+        
+        moveHistoryDiv.html(html);
+        moveHistoryDiv.scrollTop(moveHistoryDiv[0].scrollHeight);
+    }
+}
 
         function makeMove(from, to) {
             const piece = game.get(from);
