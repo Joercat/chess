@@ -76,6 +76,9 @@
         .premove-square {
             box-shadow: inset 0 0 3px 3px purple;
         }
+        .check-highlight {
+            box-shadow: inset 0 0 5px 5px rgba(255, 0, 0, 0.7) !important;
+        }
         .room-controls {
             text-align: center;
             margin: 20px 0;
@@ -88,9 +91,50 @@
             color: #2196F3;
             font-weight: bold;
         }
+        .game-over-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .game-over-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .game-over-content h2 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        .refresh-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .refresh-button:hover {
+            background: #45a049;
+        }
     </style>
 </head>
 <body>
+    <div class="game-over-screen">
+        <div class="game-over-content">
+            <h2 id="game-over-text"></h2>
+            <button class="refresh-button" onclick="location.reload()">Start New Game</button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="game-info">
             <h1>Chess Online</h1>
@@ -139,6 +183,26 @@
         let preMoves = [];
         let lastMove = null;
 
+        function findKingSquare(color) {
+            const board = game.board();
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const piece = board[i][j];
+                    if (piece && piece.type === 'k' && piece.color === color) {
+                        const file = 'abcdefgh'[j];
+                        const rank = 8 - i;
+                        return `${file}${rank}`;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function showGameOverScreen(result) {
+            $('#game-over-text').text(result);
+            $('.game-over-screen').css('display', 'flex');
+        }
+
         socket.on('roomCreated', (roomCode) => {
             currentRoom = roomCode;
             $('#roomStatus').text(`Room Created: ${roomCode}`);
@@ -183,6 +247,7 @@
 
         socket.on('gameOver', (result) => {
             $('#status').text(result);
+            showGameOverScreen(result);
             isMyTurn = false;
         });
 
@@ -271,10 +336,10 @@
             const piece = game.get(from);
             const targetSquare = game.get(to);
             
-            const isEnPassant = piece && 
-                               piece.type === 'p' && 
-                               from[0] !== to[0] && 
-                               !targetSquare;
+            const isEnPassant = piece &&
+                            piece.type === 'p' &&
+                            from[0] !== to[0] &&
+                            !targetSquare;
             
             const move = game.move({
                 from: from,
@@ -336,14 +401,22 @@
 
         function updateStatus() {
             let status = '';
+            $('.square-55d63').removeClass('check-highlight');
+
             if (game.isCheckmate()) {
-                status = game.turn() === 'w' ? 'Game Over - Black Wins!' : 'Game Over - White Wins!';
+                status = game.turn() === 'w' ? 'Black Wins!' : 'White Wins!';
+                showGameOverScreen(status);
             } else if (game.isDraw()) {
-                status = 'Game Over - Draw!';
+                status = 'Draw!';
+                showGameOverScreen(status);
             } else {
                 status = game.turn() === 'w' ? 'White to move' : 'Black to move';
                 if (game.isCheck()) {
                     status += ' - CHECK!';
+                    const kingSquare = findKingSquare(game.turn());
+                    if (kingSquare) {
+                        $(`.square-${kingSquare}`).addClass('check-highlight');
+                    }
                 }
             }
             $('#status').text(status);
