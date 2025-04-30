@@ -270,7 +270,7 @@
         let isMyTurn = false;
         let premoveFrom = null;
         let premoveTo = null;
-        let lastMove = null;
+        let selectedSquare = null;
 
         // Socket event handlers
         socket.on('roomCreated', (roomCode) => {
@@ -377,6 +377,10 @@
                 });
             });
 
+            $('#capturedWhite').html(capturedPieces.w.map(p =>
+                `<img src="https://chessboardjs.com/img/chesspieces/wikipedia/w${p.toUpperCase()}.png">`
+            ).join(''));
+            
             $('#capturedBlack').html(capturedPieces.b.map(p =>
                 `<img src="https://chessboardjs.com/img/chesspieces/wikipedia/b${p.toUpperCase()}.png">`
             ).join(''));
@@ -468,6 +472,44 @@
             $('#status').text(status);
         }
 
+        function handleSquareClick(event) {
+            const square = $(event.currentTarget).data('square');
+            const piece = game.get(square);
+
+            if (!isMyTurn) {
+                handlePremove(square);
+                return;
+            }
+
+            if (selectedSquare === null) {
+                if (piece && piece.color === playerColor) {
+                    selectedSquare = square;
+                    highlightLegalMoves(square);
+                    $(event.currentTarget).addClass('selected-square');
+                }
+            } else {
+                const move = makeMove(selectedSquare, square);
+                $('.square-55d63').removeClass('selected-square highlight-square');
+                selectedSquare = null;
+
+                if (move) {
+                    socket.emit('move', {
+                        from: move.from,
+                        to: move.to,
+                        roomCode: currentRoom
+                    });
+                }
+            }
+        }
+
+        function highlightLegalMoves(square) {
+            $('.square-55d63').removeClass('highlight-square');
+            const moves = game.moves({ square: square, verbose: true });
+            moves.forEach(move => {
+                $(`[data-square="${move.to}"]`).addClass('highlight-square');
+            });
+        }
+
         // Event Listeners
         $('#createRoom').click(() => {
             socket.emit('createRoom');
@@ -490,23 +532,12 @@
             board = Chessboard('board', {
                 position: 'start',
                 orientation: playerColor === 'b' ? 'black' : 'white',
-                draggable: true,
-                onDragStart: (source, piece) => {
-                    if (!isMyTurn || piece.search(playerColor) === -1) {
-                        return false;
-                    }
-                },
-                onDrop: (from, to) => {
-                    const move = makeMove(from, to);
-                    if (move) {
-                        socket.emit('move', { from, to, roomCode: currentRoom });
-                    }
-                    return !!move;
-                },
-                onSnapEnd: () => {
-                    board.position(game.fen());
-                }
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                draggable: false
             });
+
+            // Add click handlers for squares
+            $('.square-55d63').on('click', handleSquareClick);
             
             updateStatus();
         }
