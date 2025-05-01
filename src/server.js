@@ -3,14 +3,19 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const { Chess } = require('chess.js');
+const path = require('path');
 
 app.use(express.static('public'));
 
 const rooms = new Map();
 
+function generateRoomCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
 io.on('connection', (socket) => {
     socket.on('createRoom', () => {
-        const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const roomCode = generateRoomCode();
         rooms.set(roomCode, {
             players: [socket.id],
             game: new Chess(),
@@ -22,16 +27,25 @@ io.on('connection', (socket) => {
 
     socket.on('joinRoom', (roomCode) => {
         const room = rooms.get(roomCode);
-        if (room && room.players.length < 2) {
-            room.players.push(socket.id);
-            socket.join(roomCode);
-            socket.emit('joinedRoom', roomCode);
-            io.to(roomCode).emit('gameStart', {
-                white: room.players[0],
-                black: room.players[1]
-            });
-        } else {
-            socket.emit('roomError', 'Room not found or full');
+        if (!room) {
+            socket.emit('roomError', 'Room not found');
+            return;
+        }
+        if (room.players.length >= 2) {
+            socket.emit('roomError', 'Room is full');
+            return;
+        }
+        
+        room.players.push(socket.id);
+        socket.join(roomCode);
+        socket.emit('joinedRoom', roomCode);
+
+        if (room.players.length === 2) {
+            const white = Math.random() < 0.5 ? room.players[0] : room.players[1];
+            const black = room.players.find(id => id !== white);
+            room.currentTurn = white;
+            
+            io.to(roomCode).emit('gameStart', { white, black });
         }
     });
 
@@ -39,15 +53,22 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomCode);
         if (room && socket.id === room.currentTurn) {
             try {
-                const move = room.game.move({ from, to });
+                const move = room.game.move({ 
+                    from: from, 
+                    to: to, 
+                    promotion: 'q' 
+                });
+                
                 if (move) {
                     room.currentTurn = room.players.find(id => id !== socket.id);
                     io.to(roomCode).emit('moveMade', {
                         from,
                         to,
                         fen: room.game.fen(),
-                        move: move
+                        move: move,
+                        history: room.game.history()
                     });
+                    
                     if (room.game.isGameOver()) {
                         let gameResult;
                         if (room.game.isCheckmate()) {
@@ -64,22 +85,14 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('newGame', (roomCode) => {
-        const room = rooms.get(roomCode);
-        if (room) {
-            room.game = new Chess();
-            room.currentTurn = room.players[0];
-            io.to(roomCode).emit('gameReset', room.game.fen());
-        }
-    });
-
     socket.on('disconnect', () => {
-        rooms.forEach((room, roomCode) => {
+        for (const [roomCode, room] of rooms.entries()) {
             if (room.players.includes(socket.id)) {
                 io.to(roomCode).emit('playerLeft');
                 rooms.delete(roomCode);
+                break;
             }
-        });
+        }
     });
 });
 
