@@ -386,36 +386,38 @@
                 `<img src="https://chessboardjs.com/img/chesspieces/wikipedia/b${p.toUpperCase()}.png">`
             ).join(''));
         }
-
-        function updateMoveHistory(move) {
-            if (move) {
-                const san = game.history().pop();
-                const moveNumber = Math.ceil(game.history().length / 2);
-                const moveRow = $('<div class="move-row"></div>');
-                
-                if (game.turn() === 'b') {
-                    moveRow.html(
-                        `<span class="move-number">${moveNumber}.</span>` +
-                        `<span class="move">${san}</span>` +
-                        `<span class="move"></span>`
-                    );
-                } else {
-                    const lastRow = $('#moveHistory .move-row').last();
-                    if (lastRow.length && lastRow.find('.move').last().text() === '') {
-                        lastRow.find('.move').last().text(san);
-                    } else {
-                        moveRow.html(
-                            `<span class="move-number">${moveNumber}.</span>` +
-                            `<span class="move"></span>` +
-                            `<span class="move">${san}</span>`
-                        );
-                    }
-                }
-                
+function updateMoveHistory(move) {
+    if (move) {
+        const history = game.history();
+        const san = history[history.length - 1];
+        const moveNumber = Math.ceil(history.length / 2);
+        const moveRow = $('<div class="move-row"></div>');
+        
+        if (game.turn() === 'b') {
+            moveRow.html(
+                `<span class="move-number">${moveNumber}.</span>` +
+                `<span class="move">${san}</span>` +
+                `<span class="move"></span>`
+            );
+            $('#moveHistory').append(moveRow);
+        } else {
+            const lastRow = $('#moveHistory .move-row').last();
+            if (lastRow.length && lastRow.find('.move').last().text() === '') {
+                lastRow.find('.move').last().text(san);
+            } else {
+                moveRow.html(
+                    `<span class="move-number">${moveNumber}.</span>` +
+                    `<span class="move"></span>` +
+                    `<span class="move">${san}</span>`
+                );
                 $('#moveHistory').append(moveRow);
-                $('#moveHistory').scrollTop($('#moveHistory')[0].scrollHeight);
             }
         }
+        
+        $('#moveHistory').scrollTop($('#moveHistory')[0].scrollHeight);
+    }
+}
+
 
         function handlePremove(square) {
             if (!isMyTurn && premoveFrom === null) {
