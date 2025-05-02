@@ -4,23 +4,24 @@
     <title>Chess Online</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
-        /* Base styles */
-        body {
-            transition: background-color 0.3s, color 0.3s;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
+  /* Base styles */
+body {
+    transition: background-color 0.3s, color 0.3s;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Theme styles */
 body.theme-light {
     background-color: #ffffff;
     color: #000000;
@@ -36,6 +37,9 @@ body.theme-dark {
 body.theme-dark .side-panel {
     background-color: #1e1e1e;
 }
+body.theme-dark #board {
+    opacity: 0.85;
+}
 
 body.theme-blue {
     background-color: #1a237e;
@@ -44,178 +48,187 @@ body.theme-blue {
 body.theme-blue .side-panel {
     background-color: #0d1642;
 }
+body.theme-blue #board {
+    opacity: 0.85;
+}
 
-        /* Chess board elements */
-        .board-container {
-            display: flex;
-            gap: 20px;
-        }
+/* Chess board elements */
+.board-container {
+    display: flex;
+    gap: 20px;
+}
 
-        #board {
-            width: 600px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-        }
+#board {
+    width: 600px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
 
-        /* Special square highlights */
-        .highlight-square {
-            box-shadow: inset 0 0 3px 3px yellow !important;
-        }
+/* Special square highlights */
+.highlight-square {
+    box-shadow: inset 0 0 3px 3px yellow !important;
+}
 
-        .selected-square {
-            box-shadow: inset 0 0 3px 3px blue !important;
-        }
+.selected-square {
+    box-shadow: inset 0 0 3px 3px blue !important;
+}
 
-        .last-move {
-            background-color: rgba(155, 199, 0, 0.41) !important;
-        }
+.last-move {
+    background-color: rgba(155, 199, 0, 0.41) !important;
+}
 
-        .premove {
-            background-color: rgba(255, 0, 0, 0.5) !important;
-        }
+.premove {
+    background-color: rgba(255, 0, 0, 0.5) !important;
+}
 
-        /* Check highlight */
-        .in-check {
-            animation: check-pulse 1.5s infinite;
-        }
+/* Check highlight */
+.in-check {
+    position: relative;
+}
 
-        @keyframes check-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
-        }
+.in-check::before {
+    content: '';
+    position: absolute;
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    background-color: rgba(255, 0, 0, 0.5);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 
-        /* Side panels */
-        .side-panel {
-            width: 200px;
-            padding: 20px;
-            background-color: #f0f0f0;
-            border-radius: 8px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.2);
-        }
+/* Side panels */
+.side-panel {
+    width: 200px;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
 
-        .captured-pieces {
-            margin: 10px 0;
-            min-height: 50px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
+.captured-pieces {
+    margin: 10px 0;
+    min-height: 50px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
 
-        .captured-pieces img {
-            width: 30px;
-            height: 30px;
-            transition: transform 0.2s;
-        }
+.captured-pieces img {
+    width: 30px;
+    height: 30px;
+    transition: transform 0.2s;
+}
 
-        .captured-pieces img:hover {
-            transform: scale(1.2);
-        }
+.captured-pieces img:hover {
+    transform: scale(1.2);
+}
 
-        /* Move history */
-        #moveHistory {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-top: 10px;
-            background: white;
-            border-radius: 4px;
-        }
+/* Move history */
+#moveHistory {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 10px;
+    background: white;
+    border-radius: 4px;
+}
 
-        .move-row {
-            display: flex;
-            margin: 5px 0;
-            font-family: 'Courier New', monospace;
-        }
+.move-row {
+    display: flex;
+    margin: 5px 0;
+    font-family: 'Courier New', monospace;
+}
 
-        .move-number {
-            width: 30px;
-            color: #666;
-        }
+.move-number {
+    width: 30px;
+    color: #666;
+}
 
-        .move {
-            flex: 1;
-            padding: 0 5px;
-        }
+.move {
+    flex: 1;
+    padding: 0 5px;
+}
 
-        /* Game end overlay */
-        .game-end-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
+/* Game end overlay */
+.game-end-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
 
-        .game-end-message {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            color: black;
-        }
+.game-end-message {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    color: black;
+}
 
-        /* Theme switcher */
-        .theme-switch {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-        }
+/* Theme switcher */
+.theme-switch {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+}
 
-        #themeSelect {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            background: white;
-            cursor: pointer;
-        }
+#themeSelect {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+}
 
-        /* Room controls */
-        .room-controls {
-            text-align: center;
-            margin: 20px 0;
-        }
+/* Room controls */
+.room-controls {
+    text-align: center;
+    margin: 20px 0;
+}
 
-        #roomCode {
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin: 0 10px;
-        }
+#roomCode {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin: 0 10px;
+}
 
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            background: #2196F3;
-            color: white;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    background: #2196F3;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
 
-        button:hover {
-            background: #1976D2;
-        }
+button:hover {
+    background: #1976D2;
+}
 
-        #roomStatus {
-            color: #2196F3;
-            font-weight: bold;
-            margin-top: 10px;
-        }
+#roomStatus {
+    color: #2196F3;
+    font-weight: bold;
+    margin-top: 10px;
+}
 
-        #status {
-            font-size: 18px;
-            margin: 10px 0;
-            text-align: center;
-        }
+#status {
+    font-size: 18px;
+    margin: 10px 0;
+    text-align: center;
+}
     </style>
 </head>
 <body class="theme-light">
