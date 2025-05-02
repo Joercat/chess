@@ -28,6 +28,11 @@ body.theme-light {
 }
 body.theme-light .side-panel {
     background-color: #f0f0f0;
+    border: 5px solid black;
+}
+body.theme-dark #board {
+    opacity: 1;
+    border: 5px solid black;
 }
 
 body.theme-dark {
@@ -36,9 +41,11 @@ body.theme-dark {
 }
 body.theme-dark .side-panel {
     background-color: #1e1e1e;
+    border: 5px solid white;
 }
 body.theme-dark #board {
-    opacity: 0.85;
+    opacity: 0.7;
+    border: 5px solid white;
 }
 
 body.theme-blue {
@@ -47,9 +54,11 @@ body.theme-blue {
 }
 body.theme-blue .side-panel {
     background-color: #0d1642;
+    border: 5px solid white;
 }
 body.theme-blue #board {
-    opacity: 0.85;
+    opacity: 0.7;
+    border: 5px solid white;
 }
 
 /* Chess board elements */
@@ -104,6 +113,7 @@ body.theme-blue #board {
     background-color: #f0f0f0;
     border-radius: 8px;
     box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    border: 5px solid black;
 }
 
 .captured-pieces {
