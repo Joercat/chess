@@ -4,7 +4,7 @@
     <title>Chess Online</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
-  /* Base styles */
+        
 body {
     transition: background-color 0.3s, color 0.3s;
     margin: 0;
@@ -21,7 +21,6 @@ body {
     justify-content: center;
 }
 
-/* Theme styles */
 body.theme-light {
     background-color: #ffffff;
     color: #000000;
@@ -57,11 +56,10 @@ body.theme-blue .side-panel {
     border: 5px solid white;
 }
 body.theme-blue #board {
-    opacity: 0.7;
+    opacity: 0.85;
     border: 5px solid white;
 }
 
-/* Chess board elements */
 .board-container {
     display: flex;
     gap: 20px;
@@ -72,7 +70,6 @@ body.theme-blue #board {
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
 
-/* Special square highlights */
 .highlight-square {
     box-shadow: inset 0 0 3px 3px yellow !important;
 }
@@ -89,7 +86,6 @@ body.theme-blue #board {
     background-color: rgba(255, 0, 0, 0.5) !important;
 }
 
-/* Check highlight */
 .in-check {
     position: relative;
 }
@@ -106,7 +102,6 @@ body.theme-blue #board {
     transform: translate(-50%, -50%);
 }
 
-/* Side panels */
 .side-panel {
     width: 200px;
     padding: 20px;
@@ -134,7 +129,6 @@ body.theme-blue #board {
     transform: scale(1.2);
 }
 
-/* Move history */
 #moveHistory {
     height: 300px;
     overflow-y: auto;
@@ -161,7 +155,6 @@ body.theme-blue #board {
     padding: 0 5px;
 }
 
-/* Game end overlay */
 .game-end-overlay {
     display: none;
     position: fixed;
@@ -183,7 +176,6 @@ body.theme-blue #board {
     color: black;
 }
 
-/* Theme switcher */
 .theme-switch {
     position: fixed;
     top: 20px;
@@ -199,7 +191,6 @@ body.theme-blue #board {
     cursor: pointer;
 }
 
-/* Room controls */
 .room-controls {
     text-align: center;
     margin: 20px 0;
@@ -292,7 +283,6 @@ button:hover {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Initialize variables
         const socket = io();
         let board = null;
         let game = new Chess();
@@ -303,7 +293,6 @@ button:hover {
         let premoveTo = null;
         let selectedSquare = null;
 
-        // Socket event handlers
         socket.on('roomCreated', (roomCode) => {
             currentRoom = roomCode;
             $('#roomStatus').text(`Room Created: ${roomCode}`);
@@ -324,17 +313,14 @@ button:hover {
         socket.on('moveMade', ({ from, to, fen, move }) => {
             game.load(fen);
             board.position(fen);
-            
-            // Remove previous highlights
+
             $('.square-55d63').removeClass('last-move');
             
-            // Highlight last move
             $(`.square-${from}`).addClass('last-move');
             $(`.square-${to}`).addClass('last-move');
             
             isMyTurn = game.turn() === playerColor;
-            
-            // Play sound
+
             const sound = document.getElementById(move.captured ? 'captureSound' : 'moveSound');
             sound.currentTime = 0;
             sound.play();
@@ -344,7 +330,6 @@ button:hover {
             updateMoveHistory(move);
             updateCheckHighlight();
             
-            // Try premove if exists
             tryPremove();
         });
 
@@ -362,7 +347,6 @@ button:hover {
             $('#roomStatus').text(message);
         });
 
-        // Game functions
         function updateCheckHighlight() {
             $('.square-55d63').removeClass('in-check');
             if (game.in_check()) {
@@ -542,7 +526,6 @@ function updateMoveHistory(move) {
             });
         }
 
-        // Event Listeners
         $('#createRoom').click(() => {
             socket.emit('createRoom');
         });
@@ -559,7 +542,6 @@ function updateMoveHistory(move) {
             $('body').removeClass().addClass(`theme-${theme}`);
         });
 
-        // Initialize game
         function initGame() {
             board = Chessboard('board', {
                 position: 'start',
@@ -568,13 +550,11 @@ function updateMoveHistory(move) {
                 draggable: false
             });
 
-            // Add click handlers for squares
             $('.square-55d63').on('click', handleSquareClick);
             
             updateStatus();
         }
 
-        // Initialize the game when the page loads
         $(document).ready(() => {
             initGame();
         });
