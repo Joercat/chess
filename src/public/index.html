@@ -29,7 +29,7 @@ body.theme-light .side-panel {
     background-color: #f0f0f0;
     border: 5px solid black;
 }
-body.theme-dark #board {
+body.theme-light #board {
     opacity: 1;
     border: 5px solid black;
 }
@@ -215,8 +215,13 @@ button {
     transition: background 0.3s;
 }
 
-button:hover {
+button:hover:not(:disabled) {
     background: #1976D2;
+}
+
+button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
 }
 
 #roomStatus {
@@ -230,6 +235,82 @@ button:hover {
     margin: 10px 0;
     text-align: center;
 }
+
+.error-message {
+    color: #f44336;
+    font-weight: bold;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid #f44336;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.success-message {
+    color: #4caf50;
+    font-weight: bold;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid #4caf50;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.connection-status {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.connection-status.connected {
+    background: #4caf50;
+    color: white;
+}
+
+.connection-status.disconnected {
+    background: #f44336;
+    color: white;
+}
+
+.connection-status.reconnecting {
+    background: #ff9800;
+    color: white;
+}
+
+#errorLog {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.show-errors {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 5px 10px;
+    font-size: 12px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
     </style>
 </head>
 <body class="theme-light">
@@ -241,6 +322,8 @@ button:hover {
         </select>
     </div>
 
+    <div class="connection-status" id="connectionStatus">Connecting...</div>
+
     <div class="game-end-overlay">
         <div class="game-end-message">
             <h2 id="endGameMessage"></h2>
@@ -251,9 +334,10 @@ button:hover {
     <div class="container">
         <div class="game-info">
             <h1>Chess Online</h1>
+            <div id="messageContainer"></div>
             <div class="room-controls">
                 <button id="createRoom">Create Room</button>
-                <input type="text" id="roomCode" placeholder="Enter Room Code">
+                <input type="text" id="roomCode" placeholder="Enter Room Code" maxlength="6">
                 <button id="joinRoom">Join Room</button>
                 <p id="roomStatus"></p>
             </div>
@@ -275,6 +359,9 @@ button:hover {
         </div>
     </div>
 
+    <button class="show-errors" onclick="toggleErrorLog()">Show Errors</button>
+    <div id="errorLog"></div>
+
     <audio id="moveSound" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAADAAAGhgBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVWqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr///////////////////////////////////////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAAoZxhxX2AAAAAAAAAAAAAAAAAAAA//tQxAAACVDlIgQwYgEjmWc/PCAAAFBHAAAAAAA0kBIAAAEkAAAAACEkBIAAAEkAAAAACQAAP/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr/+xDE1gPAAAGkAAAAIAAANIAAAASqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg==" preload="auto"></audio>
     <audio id="captureSound" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAADAAAGhgBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVWqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr///////////////////////////////////////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAAoZxhxX2AAAAAAAAAAAAAAAAAAAA//tQxAAACZjpQgQwYgEvnSn/PCAAAPgnAAAAAAAA0kAIAAAEkAAAAABpIAQAAAJIAAAAABIAAH/6qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv/7EMTWg8AAAaQAAAAgAAA0gAAABKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" preload="auto"></audio>
 
@@ -283,282 +370,788 @@ button:hover {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
-        let board = null;
-        let game = new Chess();
-        let playerColor = 'w';
-        let currentRoom = null;
-        let isMyTurn = false;
-        let premoveFrom = null;
-        let premoveTo = null;
-        let selectedSquare = null;
+        // Enhanced error handling and state management
+        class ChessGameManager {
+            constructor() {
+                this.socket = null;
+                this.board = null;
+                this.game = new Chess();
+                this.playerColor = 'w';
+                this.currentRoom = null;
+                this.isMyTurn = false;
+                this.premoveFrom = null;
+                this.premoveTo = null;
+                this.selectedSquare = null;
+                this.pendingMove = false;
+                this.connectionAttempts = 0;
+                this.maxConnectionAttempts = 5;
+                this.reconnectTimeout = null;
+                this.moveTimeout = null;
+                this.errors = [];
+                this.lastHeartbeat = Date.now();
+                this.heartbeatInterval = null;
+                
+                this.initializeSocket();
+                this.setupEventListeners();
+                this.initGame();
+                this.startHeartbeat();
+            }
 
-        socket.on('roomCreated', (roomCode) => {
-            currentRoom = roomCode;
-            $('#roomStatus').text(`Room Created: ${roomCode}`);
-        });
+            // Enhanced error logging
+            logError(error, context = '') {
+                const errorEntry = {
+                    timestamp: new Date().toISOString(),
+                    error: error.toString(),
+                    context: context,
+                    stack: error.stack || 'No stack trace'
+                };
+                
+                this.errors.push(errorEntry);
+                if (this.errors.length > 50) {
+                    this.errors.shift(); // Keep only last 50 errors
+                }
+                
+                console.error(`[${context}]`, error);
+                this.updateErrorDisplay();
+            }
 
-        socket.on('joinedRoom', (roomCode) => {
-            currentRoom = roomCode;
-            $('#roomStatus').text(`Joined Room: ${roomCode}`);
-        });
+            updateErrorDisplay() {
+                const errorLog = document.getElementById('errorLog');
+                if (this.errors.length > 0) {
+                    errorLog.innerHTML = this.errors.slice(-10).map(err => 
+                        `<div>${err.timestamp} - ${err.context}: ${err.error}</div>`
+                    ).join('');
+                }
+            }
 
-        socket.on('gameStart', ({ white, black }) => {
-            playerColor = socket.id === white ? 'w' : 'b';
-            isMyTurn = playerColor === 'w';
-            initGame();
-            $('#roomStatus').text(`Game Started - You are ${playerColor === 'w' ? 'White' : 'Black'}`);
-        });
+            // Enhanced socket initialization with retry logic
+            initializeSocket() {
+                try {
+                    this.socket = io({
+                        timeout: 10000,
+                        reconnection: true,
+                        reconnectionAttempts: this.maxConnectionAttempts,
+                        reconnectionDelay: 1000,
+                        reconnectionDelayMax: 5000
+                    });
 
-        socket.on('moveMade', ({ from, to, fen, move }) => {
-            game.load(fen);
-            board.position(fen);
+                    this.setupSocketEventHandlers();
+                } catch (error) {
+                    this.logError(error, 'Socket Initialization');
+                    this.showMessage('Failed to initialize connection', 'error');
+                }
+            }
 
-            $('.square-55d63').removeClass('last-move');
-            
-            $(`.square-${from}`).addClass('last-move');
-            $(`.square-${to}`).addClass('last-move');
-            
-            isMyTurn = game.turn() === playerColor;
+            setupSocketEventHandlers() {
+                // Connection events
+                this.socket.on('connect', () => {
+                    this.connectionAttempts = 0;
+                    this.updateConnectionStatus('connected');
+                    this.showMessage('Connected to server', 'success');
+                    this.clearReconnectTimeout();
+                });
 
-            const sound = document.getElementById(move.captured ? 'captureSound' : 'moveSound');
-            sound.currentTime = 0;
-            sound.play();
-            
-            updateStatus();
-            updateCapturedPieces();
-            updateMoveHistory(move);
-            updateCheckHighlight();
-            
-            tryPremove();
-        });
+                this.socket.on('disconnect', (reason) => {
+                    this.updateConnectionStatus('disconnected');
+                    this.showMessage(`Connection lost: ${reason}`, 'error');
+                    this.logError(new Error(`Disconnected: ${reason}`), 'Socket Disconnect');
+                    
+                    if (reason === 'io server disconnect') {
+                        // Server disconnected, need to reconnect manually
+                        this.attemptReconnect();
+                    }
+                });
 
-        socket.on('gameOver', (result) => {
-            $('#endGameMessage').text(result);
-            $('.game-end-overlay').css('display', 'flex');
-        });
+                this.socket.on('connect_error', (error) => {
+                    this.connectionAttempts++;
+                    this.updateConnectionStatus('reconnecting');
+                    this.logError(error, 'Connection Error');
+                    
+                    if (this.connectionAttempts >= this.maxConnectionAttempts) {
+                        this.showMessage('Unable to connect to server. Please refresh the page.', 'error');
+                    }
+                });
 
-        socket.on('playerLeft', () => {
-            $('#roomStatus').text('Opponent left the game');
-            isMyTurn = false;
-        });
+                this.socket.on('reconnect', (attemptNumber) => {
+                    this.updateConnectionStatus('connected');
+                    this.showMessage(`Reconnected after ${attemptNumber} attempts`, 'success');
+                });
 
-        socket.on('roomError', (message) => {
-            $('#roomStatus').text(message);
-        });
+                this.socket.on('reconnect_attempt', () => {
+                    this.updateConnectionStatus('reconnecting');
+                });
 
-        function updateCheckHighlight() {
-            $('.square-55d63').removeClass('in-check');
-            if (game.in_check()) {
-                const turn = game.turn();
-                const board = game.board();
-                for (let i = 0; i < 8; i++) {
-                    for (let j = 0; j < 8; j++) {
-                        const piece = board[i][j];
-                        if (piece && piece.type === 'k' && piece.color === turn) {
-                            const square = String.fromCharCode(97 + j) + (8 - i);
-                            $(`.square-${square}`).addClass('in-check');
+                // Game events with validation
+                this.socket.on('roomCreated', (data) => {
+                    if (this.validateRoomData(data)) {
+                        this.currentRoom = typeof data === 'string' ? data : data.roomCode;
+                        $('#roomStatus').text(`Room Created: ${this.currentRoom}`);
+                        this.showMessage('Room created successfully', 'success');
+                    }
+                });
+
+                this.socket.on('joinedRoom', (data) => {
+                    if (this.validateRoomData(data)) {
+                        this.currentRoom = typeof data === 'string' ? data : data.roomCode;
+                        $('#roomStatus').text(`Joined Room: ${this.currentRoom}`);
+                        this.showMessage('Joined room successfully', 'success');
+                    }
+                });
+
+                this.socket.on('gameStart', (data) => {
+                    if (this.validateGameStartData(data)) {
+                        this.playerColor = this.socket.id === data.white ? 'w' : 'b';
+                        this.isMyTurn = this.playerColor === 'w';
+                        this.reinitializeBoard();
+                        $('#roomStatus').text(`Game Started - You are ${this.playerColor === 'w' ? 'White' : 'Black'}`);
+                        this.showMessage('Game started!', 'success');
+                    }
+                });
+
+                this.socket.on('moveMade', (data) => {
+                    if (this.validateMoveData(data)) {
+                        this.handleOpponentMove(data);
+                    }
+                });
+
+                this.socket.on('gameOver', (result) => {
+                    if (typeof result === 'string' && result.trim()) {
+                        $('#endGameMessage').text(result);
+                        $('.game-end-overlay').css('display', 'flex');
+                        this.isMyTurn = false;
+                    }
+                });
+
+                this.socket.on('playerLeft', () => {
+                    $('#roomStatus').text('Opponent left the game');
+                    this.isMyTurn = false;
+                    this.showMessage('Opponent left the game', 'error');
+                });
+
+                this.socket.on('roomError', (message) => {
+                    const errorMsg = typeof message === 'string' ? message : 'Room error occurred';
+                    $('#roomStatus').text(errorMsg);
+                    this.showMessage(errorMsg, 'error');
+                });
+
+                // Heartbeat for connection monitoring
+                this.socket.on('pong', () => {
+                    this.lastHeartbeat = Date.now();
+                });
+            }
+
+            // Data validation methods
+            validateRoomData(data) {
+                if (!data) {
+                    this.logError(new Error('Room data is null or undefined'), 'Room Validation');
+                    return false;
+                }
+                
+                const roomCode = typeof data === 'string' ? data : data.roomCode;
+                if (!roomCode || typeof roomCode !== 'string' || roomCode.length < 3) {
+                    this.logError(new Error('Invalid room code format'), 'Room Validation');
+                    return false;
+                }
+                
+                return true;
+            }
+
+            validateGameStartData(data) {
+                if (!data || typeof data !== 'object') {
+                    this.logError(new Error('Game start data is invalid'), 'Game Start Validation');
+                    return false;
+                }
+                
+                if (!data.white || !data.black || typeof data.white !== 'string' || typeof data.black !== 'string') {
+                    this.logError(new Error('Invalid player data in game start'), 'Game Start Validation');
+                    return false;
+                }
+                
+                return true;
+            }
+
+            validateMoveData(data) {
+                if (!data || typeof data !== 'object') {
+                    this.logError(new Error('Move data is invalid'), 'Move Validation');
+                    return false;
+                }
+                
+                if (!data.from || !data.to || !data.fen) {
+                    this.logError(new Error('Move data missing required fields'), 'Move Validation');
+                    return false;
+                }
+                
+                // Validate FEN format
+                try {
+                    const testGame = new Chess();
+                    testGame.load(data.fen);
+                } catch (error) {
+                    this.logError(new Error('Invalid FEN in move data'), 'Move Validation');
+                    return false;
+                }
+                
+                return true;
+            }
+
+            // Enhanced connection management
+            attemptReconnect() {
+                if (this.reconnectTimeout) return;
+                
+                this.reconnectTimeout = setTimeout(() => {
+                    this.socket.connect();
+                    this.reconnectTimeout = null;
+                }, 2000);
+            }
+
+            clearReconnectTimeout() {
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                    this.reconnectTimeout = null;
+                }
+            }
+
+            updateConnectionStatus(status) {
+                const statusElement = document.getElementById('connectionStatus');
+                statusElement.className = `connection-status ${status}`;
+                
+                switch (status) {
+                    case 'connected':
+                        statusElement.textContent = 'Connected';
+                        break;
+                    case 'disconnected':
+                        statusElement.textContent = 'Disconnected';
+                        break;
+                    case 'reconnecting':
+                        statusElement.textContent = 'Reconnecting...';
+                        break;
+                }
+            }
+
+            startHeartbeat() {
+                this.heartbeatInterval = setInterval(() => {
+                    if (this.socket && this.socket.connected) {
+                        this.socket.emit('ping');
+                        
+                        // Check if we haven't received a pong in a while
+                        if (Date.now() - this.lastHeartbeat > 30000) {
+                            this.logError(new Error('Heartbeat timeout'), 'Heartbeat');
+                            this.socket.disconnect();
                         }
                     }
-                }
+                }, 15000);
             }
-        }
 
-        function updateCapturedPieces() {
-            const positions = game.board();
-            const currentPieces = { w: {}, b: {} };
-            'prnbqk'.split('').forEach(piece => {
-                currentPieces.w[piece] = 0;
-                currentPieces.b[piece] = 0;
-            });
-            
-            positions.forEach(row => {
-                row.forEach(piece => {
-                    if (piece) {
-                        currentPieces[piece.color][piece.type]++;
+            // Enhanced move handling with multiple move prevention
+            handleOpponentMove(data) {
+                try {
+                    this.game.load(data.fen);
+                    this.board.position(data.fen);
+
+                    $('.square-55d63').removeClass('last-move');
+                    
+                    $(`.square-${data.from}`).addClass('last-move');
+                    $(`.square-${data.to}`).addClass('last-move');
+                    
+                    this.isMyTurn = this.game.turn() === this.playerColor;
+
+                    const sound = document.getElementById(data.move && data.move.captured ? 'captureSound' : 'moveSound');
+                    if (sound) {
+                        sound.currentTime = 0;
+                        sound.play().catch(e => this.logError(e, 'Audio Play'));
                     }
-                });
-            });
-            
-            const initialCounts = { p: 8, r: 2, n: 2, b: 2, q: 1, k: 1 };
-            const capturedPieces = { w: [], b: [] };
-            
-            ['w', 'b'].forEach(color => {
-                Object.entries(initialCounts).forEach(([piece, count]) => {
-                    const captured = count - currentPieces[color][piece];
-                    for (let i = 0; i < captured; i++) {
-                        capturedPieces[color].push(piece);
+                    
+                    this.updateStatus();
+                    this.updateCapturedPieces();
+                    if (data.move) {
+                        this.updateMoveHistory(data.move);
                     }
-                });
-            });
-
-            $('#capturedWhite').html(capturedPieces.w.map(p =>
-                `<img src="https://chessboardjs.com/img/chesspieces/wikipedia/w${p.toUpperCase()}.png">`
-            ).join(''));
-            
-            $('#capturedBlack').html(capturedPieces.b.map(p =>
-                `<img src="https://chessboardjs.com/img/chesspieces/wikipedia/b${p.toUpperCase()}.png">`
-            ).join(''));
-        }
-function updateMoveHistory(move) {
-    const history = game.history();
-    const lastMove = history[history.length - 1];
-    const moveNumber = Math.ceil(history.length / 2);
-    const moveRow = $('<div class="move-row"></div>');
-    
-    if (game.turn() === 'b') {
-        moveRow.html(
-            `<span class="move-number">${moveNumber}.</span>` +
-            `<span class="move">${lastMove}</span>` +
-            `<span class="move"></span>`
-        );
-        $('#moveHistory').append(moveRow);
-    } else {
-        const lastRow = $('#moveHistory .move-row').last();
-        if (lastRow.length && lastRow.find('.move').last().text() === '') {
-            lastRow.find('.move').last().text(lastMove);
-        } else {
-            moveRow.html(
-                `<span class="move-number">${moveNumber}.</span>` +
-                `<span class="move"></span>` +
-                `<span class="move">${lastMove}</span>`
-            );
-            $('#moveHistory').append(moveRow);
-        }
-    }
-    
-    $('#moveHistory').scrollTop($('#moveHistory')[0].scrollHeight);
-}
-
-
-
-        function handlePremove(square) {
-            if (!isMyTurn && premoveFrom === null) {
-                premoveFrom = square;
-                $(`.square-${square}`).addClass('premove');
-            } else if (!isMyTurn && premoveFrom !== null) {
-                premoveTo = square;
-                if (premoveFrom !== premoveTo) {
-                    $('.square-55d63').removeClass('premove');
-                    tryPremove();
+                    this.updateCheckHighlight();
+                    
+                    this.tryPremove();
+                    
+                    // Clear any pending move timeouts
+                    this.clearMoveTimeout();
+                    
+                } catch (error) {
+                    this.logError(error, 'Handle Opponent Move');
+                    this.showMessage('Error processing opponent move', 'error');
                 }
             }
-        }
 
-        function tryPremove() {
-            if (premoveFrom && premoveTo && isMyTurn) {
-                const move = makeMove(premoveFrom, premoveTo);
-                if (move) {
-                    socket.emit('move', {
-                        from: premoveFrom,
-                        to: premoveTo,
-                        roomCode: currentRoom
-                    });
-                }
-                premoveFrom = null;
-                premoveTo = null;
+            // Move timeout handling
+            setMoveTimeout() {
+                this.clearMoveTimeout();
+                this.moveTimeout = setTimeout(() => {
+                    if (this.pendingMove) {
+                        this.pendingMove = false;
+                        this.showMessage('Move timed out, please try again', 'error');
+                        this.enableButtons();
+                    }
+                }, 10000); // 10 second timeout
             }
-        }
 
-        function makeMove(from, to) {
-            try {
-                const move = game.move({ from, to, promotion: 'q' });
-                if (move) {
-                    board.position(game.fen());
-                    updateStatus();
+            clearMoveTimeout() {
+                if (this.moveTimeout) {
+                    clearTimeout(this.moveTimeout);
+                    this.moveTimeout = null;
                 }
-                return move;
-            } catch (error) {
+            }
+
+            // Enhanced move making with duplicate prevention
+            makeMove(from, to) {
+                if (this.pendingMove) {
+                    this.showMessage('Please wait for your previous move to complete', 'error');
+                    return null;
+                }
+
+                if (!this.isMyTurn) {
+                    this.showMessage('It\'s not your turn', 'error');
+                    return null;
+                }
+
+                try {
+                    const move = this.game.move({ from, to, promotion: 'q' });
+                    if (move) {
+                        this.board.position(this.game.fen());
+                        this.updateStatus();
+                        
+                        // Prevent multiple moves
+                        this.pendingMove = true;
+                        this.disableButtons();
+                        this.setMoveTimeout();
+                        
+                        return move;
+                    }
+                } catch (error) {
+                    this.logError(error, 'Make Move');
+                    this.showMessage('Invalid move', 'error');
+                }
                 return null;
             }
-        }
 
-        function updateStatus() {
-            let status = '';
-            if (game.in_checkmate()) {
-                status = `Game Over - ${game.turn() === 'w' ? 'Black' : 'White'} wins by checkmate!`;
-            } else if (game.in_draw()) {
-                status = 'Game Over - Draw!';
-            } else {
-                status = `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
-                if (game.in_check()) {
-                    status += ' (CHECK)';
-                }
-            }
-            $('#status').text(status);
-        }
-
-        function handleSquareClick(event) {
-            const square = $(event.currentTarget).data('square');
-            const piece = game.get(square);
-
-            if (!isMyTurn) {
-                handlePremove(square);
-                return;
+            // Button state management
+            disableButtons() {
+                $('#createRoom, #joinRoom').prop('disabled', true);
             }
 
-            if (selectedSquare === null) {
-                if (piece && piece.color === playerColor) {
-                    selectedSquare = square;
-                    highlightLegalMoves(square);
-                    $(event.currentTarget).addClass('selected-square');
-                }
-            } else {
-                const move = makeMove(selectedSquare, square);
-                $('.square-55d63').removeClass('selected-square highlight-square');
-                selectedSquare = null;
+            enableButtons() {
+                $('#createRoom, #joinRoom').prop('disabled', false);
+            }
 
-                if (move) {
-                    socket.emit('move', {
-                        from: move.from,
-                        to: move.to,
-                        roomCode: currentRoom
+            // Enhanced message display
+            showMessage(message, type = 'info') {
+                const messageContainer = $('#messageContainer');
+                const messageElement = $(`<div class="${type}-message">${message}</div>`);
+                
+                messageContainer.empty().append(messageElement);
+                
+                setTimeout(() => {
+                    messageElement.fadeOut(() => messageElement.remove());
+                }, 5000);
+            }
+
+            // Room creation and joining with validation
+            createRoom() {
+                if (!this.socket || !this.socket.connected) {
+                    this.showMessage('Not connected to server', 'error');
+                    return;
+                }
+
+                try {
+                    this.socket.emit('createRoom');
+                    this.disableButtons();
+                    setTimeout(() => this.enableButtons(), 2000);
+                } catch (error) {
+                    this.logError(error, 'Create Room');
+                    this.showMessage('Failed to create room', 'error');
+                }
+            }
+
+            joinRoom() {
+                const roomCode = $('#roomCode').val().trim().toUpperCase();
+                
+                if (!roomCode) {
+                    this.showMessage('Please enter a room code', 'error');
+                    return;
+                }
+                
+                if (roomCode.length < 3) {
+                    this.showMessage('Room code must be at least 3 characters', 'error');
+                    return;
+                }
+
+                if (!this.socket || !this.socket.connected) {
+                    this.showMessage('Not connected to server', 'error');
+                    return;
+                }
+
+                try {
+                    this.socket.emit('joinRoom', roomCode);
+                    this.disableButtons();
+                    setTimeout(() => this.enableButtons(), 2000);
+                } catch (error) {
+                    this.logError(error, 'Join Room');
+                    this.showMessage('Failed to join room', 'error');
+                }
+            }
+
+            updateCheckHighlight() {
+                try {
+                    $('.square-55d63').removeClass('in-check');
+                    if (this.game.in_check()) {
+                        const turn = this.game.turn();
+                        const board = this.game.board();
+                        for (let i = 0; i < 8; i++) {
+                            for (let j = 0; j < 8; j++) {
+                                const piece = board[i][j];
+                                if (piece && piece.type === 'k' && piece.color === turn) {
+                                    const square = String.fromCharCode(97 + j) + (8 - i);
+                                    $(`.square-${square}`).addClass('in-check');
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    this.logError(error, 'Update Check Highlight');
+                }
+            }
+
+            updateCapturedPieces() {
+                try {
+                    const positions = this.game.board();
+                    const currentPieces = { w: {}, b: {} };
+                    'prnbqk'.split('').forEach(piece => {
+                        currentPieces.w[piece] = 0;
+                        currentPieces.b[piece] = 0;
                     });
+                    
+                    positions.forEach(row => {
+                        row.forEach(piece => {
+                            if (piece) {
+                                currentPieces[piece.color][piece.type]++;
+                            }
+                        });
+                    });
+                    
+                    const initialCounts = { p: 8, r: 2, n: 2, b: 2, q: 1, k: 1 };
+                    const capturedPieces = { w: [], b: [] };
+                    
+                    ['w', 'b'].forEach(color => {
+                        Object.entries(initialCounts).forEach(([piece, count]) => {
+                            const captured = count - currentPieces[color][piece];
+                            for (let i = 0; i < captured; i++) {
+                                capturedPieces[color].push(piece);
+                            }
+                        });
+                    });
+
+                    $('#capturedWhite').html(capturedPieces.w.map(p =>
+                        `<img src="https://chessboardjs.com/img/chesspieces/wikipedia/w${p.toUpperCase()}.png" alt="white ${p}">`
+                    ).join(''));
+                    
+                    $('#capturedBlack').html(capturedPieces.b.map(p =>
+                        `<img src="https://chessboardjs.com/img/chesspieces/wikipedia/b${p.toUpperCase()}.png" alt="black ${p}">`
+                    ).join(''));
+                } catch (error) {
+                    this.logError(error, 'Update Captured Pieces');
+                }
+            }
+
+            updateMoveHistory(move) {
+                try {
+                    const history = this.game.history();
+                    const lastMove = history[history.length - 1];
+                    const moveNumber = Math.ceil(history.length / 2);
+                    const moveRow = $('<div class="move-row"></div>');
+                    
+                    if (this.game.turn() === 'b') {
+                        moveRow.html(
+                            `<span class="move-number">${moveNumber}.</span>` +
+                            `<span class="move">${lastMove}</span>` +
+                            `<span class="move"></span>`
+                        );
+                        $('#moveHistory').append(moveRow);
+                    } else {
+                        const lastRow = $('#moveHistory .move-row').last();
+                        if (lastRow.length && lastRow.find('.move').last().text() === '') {
+                            lastRow.find('.move').last().text(lastMove);
+                        } else {
+                            moveRow.html(
+                                `<span class="move-number">${moveNumber}.</span>` +
+                                `<span class="move"></span>` +
+                                `<span class="move">${lastMove}</span>`
+                            );
+                            $('#moveHistory').append(moveRow);
+                        }
+                    }
+                    
+                    $('#moveHistory').scrollTop($('#moveHistory')[0].scrollHeight);
+                } catch (error) {
+                    this.logError(error, 'Update Move History');
+                }
+            }
+
+            handlePremove(square) {
+                try {
+                    if (!this.isMyTurn && this.premoveFrom === null) {
+                        this.premoveFrom = square;
+                        $(`.square-${square}`).addClass('premove');
+                    } else if (!this.isMyTurn && this.premoveFrom !== null) {
+                        this.premoveTo = square;
+                        if (this.premoveFrom !== this.premoveTo) {
+                            $('.square-55d63').removeClass('premove');
+                            this.tryPremove();
+                        }
+                    }
+                } catch (error) {
+                    this.logError(error, 'Handle Premove');
+                }
+            }
+
+            tryPremove() {
+                if (this.premoveFrom && this.premoveTo && this.isMyTurn && !this.pendingMove) {
+                    try {
+                        const move = this.makeMove(this.premoveFrom, this.premoveTo);
+                        if (move) {
+                            this.socket.emit('move', {
+                                from: this.premoveFrom,
+                                to: this.premoveTo,
+                                roomCode: this.currentRoom
+                            });
+                        }
+                    } catch (error) {
+                        this.logError(error, 'Try Premove');
+                    } finally {
+                        this.premoveFrom = null;
+                        this.premoveTo = null;
+                    }
+                }
+            }
+
+            updateStatus() {
+                try {
+                    let status = '';
+                    if (this.game.in_checkmate()) {
+                        status = `Game Over - ${this.game.turn() === 'w' ? 'Black' : 'White'} wins by checkmate!`;
+                    } else if (this.game.in_draw()) {
+                        status = 'Game Over - Draw!';
+                    } else {
+                        status = `${this.game.turn() === 'w' ? 'White' : 'Black'} to move`;
+                        if (this.game.in_check()) {
+                            status += ' (CHECK)';
+                        }
+                    }
+                    $('#status').text(status);
+                } catch (error) {
+                    this.logError(error, 'Update Status');
+                }
+            }
+
+            handleSquareClick(event) {
+                try {
+                    const square = $(event.currentTarget).data('square');
+                    const piece = this.game.get(square);
+
+                    if (!this.isMyTurn) {
+                        this.handlePremove(square);
+                        return;
+                    }
+
+                    if (this.pendingMove) {
+                        this.showMessage('Please wait for your move to complete', 'error');
+                        return;
+                    }
+
+                    if (this.selectedSquare === null) {
+                        if (piece && piece.color === this.playerColor) {
+                            this.selectedSquare = square;
+                            this.highlightLegalMoves(square);
+                            $(event.currentTarget).addClass('selected-square');
+                        }
+                    } else {
+                        const move = this.makeMove(this.selectedSquare, square);
+                        $('.square-55d63').removeClass('selected-square highlight-square');
+                        const oldSelectedSquare = this.selectedSquare;
+                        this.selectedSquare = null;
+
+                        if (move) {
+                            try {
+                                this.socket.emit('move', {
+                                    from: move.from,
+                                    to: move.to,
+                                    roomCode: this.currentRoom
+                                });
+                                
+                                // Handle successful move emission
+                                setTimeout(() => {
+                                    this.pendingMove = false;
+                                    this.enableButtons();
+                                    this.clearMoveTimeout();
+                                }, 1000);
+                                
+                            } catch (error) {
+                                this.logError(error, 'Socket Emit Move');
+                                this.showMessage('Failed to send move', 'error');
+                                this.pendingMove = false;
+                                this.enableButtons();
+                                this.clearMoveTimeout();
+                            }
+                        }
+                    }
+                } catch (error) {
+                    this.logError(error, 'Handle Square Click');
+                }
+            }
+
+            highlightLegalMoves(square) {
+                try {
+                    $('.square-55d63').removeClass('highlight-square');
+                    const moves = this.game.moves({ square: square, verbose: true });
+                    moves.forEach(move => {
+                        $(`[data-square="${move.to}"]`).addClass('highlight-square');
+                    });
+                } catch (error) {
+                    this.logError(error, 'Highlight Legal Moves');
+                }
+            }
+
+            setupEventListeners() {
+                $('#createRoom').click(() => this.createRoom());
+                $('#joinRoom').click(() => this.joinRoom());
+
+                $('#roomCode').on('keypress', (e) => {
+                    if (e.which === 13) { // Enter key
+                        this.joinRoom();
+                    }
+                });
+
+                $('#themeSelect').change(function() {
+                    const theme = $(this).val();
+                    $('body').removeClass().addClass(`theme-${theme}`);
+                });
+
+                // Handle page visibility changes
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        // Page is hidden, reduce activity
+                        if (this.heartbeatInterval) {
+                            clearInterval(this.heartbeatInterval);
+                        }
+                    } else {
+                        // Page is visible again, resume activity
+                        this.startHeartbeat();
+                    }
+                });
+
+                // Handle page unload
+                window.addEventListener('beforeunload', () => {
+                    if (this.socket && this.socket.connected) {
+                        this.socket.disconnect();
+                    }
+                });
+            }
+
+            initGame() {
+                try {
+                    this.board = Chessboard('board', {
+                        position: 'start',
+                        orientation: this.playerColor === 'b' ? 'black' : 'white',
+                        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                        draggable: false
+                    });
+
+                    $('.square-55d63').on('click', (event) => this.handleSquareClick(event));
+                    
+                    this.updateStatus();
+                } catch (error) {
+                    this.logError(error, 'Initialize Game');
+                    this.showMessage('Failed to initialize game board', 'error');
+                }
+            }
+
+            reinitializeBoard() {
+                try {
+                    if (this.board) {
+                        this.board.destroy();
+                    }
+                    
+                    this.board = Chessboard('board', {
+                        position: 'start',
+                        orientation: this.playerColor === 'b' ? 'black' : 'white',
+                        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                        draggable: false
+                    });
+
+                    $('.square-55d63').off('click').on('click', (event) => this.handleSquareClick(event));
+                    
+                    this.updateStatus();
+                } catch (error) {
+                    this.logError(error, 'Reinitialize Board');
+                    this.showMessage('Failed to reinitialize game board', 'error');
+                }
+            }
+
+            // Cleanup method
+            destroy() {
+                try {
+                    if (this.heartbeatInterval) {
+                        clearInterval(this.heartbeatInterval);
+                    }
+                    
+                    if (this.reconnectTimeout) {
+                        clearTimeout(this.reconnectTimeout);
+                    }
+                    
+                    if (this.moveTimeout) {
+                        clearTimeout(this.moveTimeout);
+                    }
+                    
+                    if (this.socket) {
+                        this.socket.disconnect();
+                    }
+                    
+                    if (this.board) {
+                        this.board.destroy();
+                    }
+                } catch (error) {
+                    this.logError(error, 'Destroy');
                 }
             }
         }
 
-        function highlightLegalMoves(square) {
-            $('.square-55d63').removeClass('highlight-square');
-            const moves = game.moves({ square: square, verbose: true });
-            moves.forEach(move => {
-                $(`[data-square="${move.to}"]`).addClass('highlight-square');
-            });
-        }
-
-        $('#createRoom').click(() => {
-            socket.emit('createRoom');
-        });
-
-        $('#joinRoom').click(() => {
-            const roomCode = $('#roomCode').val().toUpperCase();
-            if (roomCode) {
-                socket.emit('joinRoom', roomCode);
+        // Global error handling
+        window.addEventListener('error', (event) => {
+            if (window.chessGame) {
+                window.chessGame.logError(event.error, 'Global Error');
             }
         });
 
-        $('#themeSelect').change(function() {
-            const theme = $(this).val();
-            $('body').removeClass().addClass(`theme-${theme}`);
+        window.addEventListener('unhandledrejection', (event) => {
+            if (window.chessGame) {
+                window.chessGame.logError(new Error(event.reason), 'Unhandled Promise Rejection');
+            }
         });
 
-        function initGame() {
-            board = Chessboard('board', {
-                position: 'start',
-                orientation: playerColor === 'b' ? 'black' : 'white',
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-                draggable: false
-            });
-
-            $('.square-55d63').on('click', handleSquareClick);
-            
-            updateStatus();
+        // Error log toggle function
+        function toggleErrorLog() {
+            const errorLog = document.getElementById('errorLog');
+            if (errorLog.style.display === 'none' || errorLog.style.display === '') {
+                errorLog.style.display = 'block';
+            } else {
+                errorLog.style.display = 'none';
+            }
         }
 
+        // Initialize the game when document is ready
         $(document).ready(() => {
-            initGame();
+            try {
+                window.chessGame = new ChessGameManager();
+            } catch (error) {
+                console.error('Failed to initialize chess game:', error);
+                document.getElementById('messageContainer').innerHTML = 
+                    '<div class="error-message">Failed to initialize game. Please refresh the page.</div>';
+            }
         });
     </script>
 </body>
 </html>
-
