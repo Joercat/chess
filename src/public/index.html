@@ -432,10 +432,10 @@ button:disabled {
             initializeSocket() {
                 try {
                     this.socket = io({
-                        timeout: 10000,
+                        timeout: 1000000,
                         reconnection: true,
                         reconnectionAttempts: this.maxConnectionAttempts,
-                        reconnectionDelay: 1000,
+                        reconnectionDelay: 600,
                         reconnectionDelayMax: 5000
                     });
 
@@ -643,7 +643,7 @@ button:disabled {
                             this.socket.disconnect();
                         }
                     }
-                }, 15000);
+                }, 150000000);
             }
 
             // Enhanced move handling with multiple move prevention
