@@ -373,6 +373,10 @@ button:disabled {
         // Enhanced error handling and state management
         class ChessGameManager {
             constructor() {
+                this.idleTimeoutDuration = 300000; // 5 minutes
+                this.lastActivityTime = Date.now();
+                this.checkIdleInterval = setInterval(() => this.checkIdleTimeout(), 10000);
+
                 this.socket = null;
                 this.board = null;
                 this.game = new Chess();
@@ -536,6 +540,7 @@ button:disabled {
 
                 // Heartbeat for connection monitoring
                 this.socket.on('pong', () => {
+                    this.updateActivityTime();
                     this.lastHeartbeat = Date.now();
                 });
             }
@@ -643,6 +648,7 @@ button:disabled {
 
             // Enhanced move handling with multiple move prevention
             handleOpponentMove(data) {
+                this.updateActivityTime();
                 try {
                     this.game.load(data.fen);
                     this.board.position(data.fen);
@@ -948,6 +954,7 @@ button:disabled {
             }
 
             handleSquareClick(event) {
+                this.updateActivityTime();
                 try {
                     const square = $(event.currentTarget).data('square');
                     const piece = this.game.get(square);
@@ -1089,6 +1096,19 @@ button:disabled {
                     this.logError(error, 'Reinitialize Board');
                     this.showMessage('Failed to reinitialize game board', 'error');
                 }
+            }
+
+            
+            checkIdleTimeout() {
+                if (Date.now() - this.lastActivityTime > this.idleTimeoutDuration) {
+                    this.showMessage('Disconnected due to inactivity.', 'error');
+                    this.socket.disconnect();
+                    clearInterval(this.checkIdleInterval);
+                }
+            }
+
+            updateActivityTime() {
+                this.lastActivityTime = Date.now();
             }
 
             // Cleanup method
