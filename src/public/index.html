@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Online</title>
+    <title>Chess Online - Advanced</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,7 +129,7 @@
 
         /* --- UI Elements & Highlights --- */
         .highlight-last-move { background-color: rgba(155, 199, 0, 0.45) !important; }
-        .highlight-premove { background-color: rgba(255, 165, 0, 0.55) !important; }
+        .highlight-selected { background-color: rgba(255, 255, 0, 0.4) !important; }
         .highlight-check { box-shadow: inset 0 0 15px 5px rgba(255,0,0,0.6) !important; }
         button { padding: 0.75rem 1.5rem; font-size: 1rem; border: none; border-radius: var(--border-radius); background: var(--button-color); color: white; cursor: pointer; transition: all 0.2s; font-weight: 500; }
         button:hover:not(:disabled) { background: var(--button-hover-color); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
@@ -397,7 +397,7 @@
 
                 /** Clears all highlights from the board. */
                 clearAllHighlights() {
-                    this.elements.board.find('.square-55d63').removeClass('highlight-last-move highlight-premove highlight-check');
+                    this.elements.board.find('.square-55d63').removeClass('highlight-last-move highlight-selected highlight-check');
                 }
                 
                 /** Highlights the specified squares on the board. */
@@ -462,6 +462,7 @@
                     this.state = {
                         playerColor: null, currentRoom: null, premove: null,
                         isMyTurn: false, isGameOver: false, pendingMove: false,
+                        selectedSquare: null
                     };
                     this.idleTimer = null;
                     this.init();
@@ -471,8 +472,8 @@
                 init() {
                     try {
                         this.board = Chessboard('board', {
-                            draggable: true, position: 'start', onDragStart: (s, p) => this.onDragStart(s, p),
-                            onDrop: (s, t) => this.onDrop(s, t), onSnapEnd: () => this.board.position(this.game.fen())
+                            draggable: false, position: 'start', onSquareClick: (sq) => this.onSquareClick(sq),
+                            onSnapEnd: () => this.board.position(this.game.fen())
                         });
                         $(window).resize(() => this.board.resize());
                         this.ui.elements.createRoomBtn.on('click', () => this.socket.emit('createRoom'));
@@ -487,49 +488,44 @@
                     }
                 }
 
-                // --- Board Interaction ---
-                onDragStart(source, piece) {
-                    if (this.state.isGameOver || !this.state.isMyTurn) return false;
-                    return piece.startsWith(this.state.playerColor);
-                }
-                onDrop(source, target) {
+                // --- Board Interaction (Click-to-Move Logic) ---
+                onSquareClick(square) {
                     this.resetIdleTimer();
-                    if (source === target) return;
-                    if (this.state.isMyTurn) {
-                        this.attemptMove(source, target);
-                    } else if (!this.state.isGameOver) {
-                        this.setPremove(source, target);
+                    if (this.state.isGameOver || !this.state.isMyTurn || this.state.pendingMove) {
+                        return;
+                    }
+
+                    // If a square is already selected, try to move to the new square
+                    if (this.state.selectedSquare) {
+                        const from = this.state.selectedSquare;
+                        const to = square;
+                        this.state.selectedSquare = null;
+                        this.ui.clearAllHighlights();
+                        this.attemptMove(from, to);
+                    } 
+                    // Otherwise, select the clicked square if it contains one of the player's pieces
+                    else {
+                        const piece = this.game.get(square);
+                        if (piece && piece.color === this.state.playerColor) {
+                            this.state.selectedSquare = square;
+                            this.ui.clearAllHighlights();
+                            this.ui.highlightSquares('highlight-selected', square);
+                        }
                     }
                 }
                 
                 // --- Game Logic ---
                 attemptMove(from, to) {
-                    if (this.state.pendingMove) {
-                        this.ui.showMessage("Waiting for previous move...", "info");
-                        return;
-                    }
                     const move = this.game.move({ from, to, promotion: 'q' });
                     if (move === null) {
+                        this.ui.showMessage("Invalid move!", "error");
+                        this.board.position(this.game.fen());
                         return; // Invalid move, board will snap back.
                     }
                     this.state.pendingMove = true;
                     this.state.isMyTurn = false;
                     this.socket.emit('move', { roomCode: this.state.currentRoom, from, to });
                     this.updateUI();
-                }
-                setPremove(from, to) {
-                    this.state.premove = { from, to };
-                    this.ui.clearAllHighlights();
-                    this.ui.highlightSquares('highlight-premove', from, to);
-                    this.ui.setGameStatus(`Premove set: ${from}-${to}`);
-                }
-                tryPremove() {
-                    if (this.state.premove && this.state.isMyTurn) {
-                        const { from, to } = this.state.premove;
-                        this.state.premove = null;
-                        this.ui.clearAllHighlights();
-                        this.attemptMove(from, to);
-                    }
                 }
 
                 // --- Socket Event Handlers ---
@@ -561,7 +557,6 @@
                         this.updateUI();
                         this.ui.clearAllHighlights();
                         this.ui.highlightSquares('highlight-last-move', data.from, data.to);
-                        if (this.state.isMyTurn) this.tryPremove();
                     } else {
                         this.ui.logError(new Error("Received an invalid move from server."), "Sync");
                     }
