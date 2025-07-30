@@ -3,231 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Online</title>
+    <title>Chess Online - Advanced</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --font-family: 'Roboto', sans-serif;
+            --font-family-main: 'Roboto', sans-serif;
+            --font-family-mono: 'Space Mono', monospace;
             --border-radius: 8px;
-            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --transition-speed: 0.4s;
+            
+            /* Theme Variables */
+            --bg-color: #f0f2f5;
+            --text-color: #1c1e21;
+            --panel-bg-color: #ffffff;
+            --panel-border-color: #ddd;
+            --board-border-color: #dcdcdc;
+            --history-bg-color: #f7f7f7;
+            --input-bg-color: #fff;
+            --input-text-color: #000;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: var(--font-family);
+            font-family: var(--font-family-main);
             margin: 0;
-            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        .app-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            transition: background-color 0.4s, color 0.4s;
+            padding: 1rem;
         }
 
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 25px;
-            padding: 20px;
-            max-width: 1400px;
+        .app-container {
             width: 100%;
-            justify-content: center;
+            max-width: 1600px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
 
         /* --- THEMES --- */
-        body.theme-light { background-color: #f0f2f5; color: #1c1e21; }
-        body.theme-light .side-panel, body.theme-light .game-controls { background-color: #ffffff; border: 1px solid #ddd; }
-        body.theme-light #board { border: 8px solid #dcdcdc; }
-        body.theme-light #moveHistory { background-color: #f7f7f7; }
-
-        body.theme-dark { background-color: #18191a; color: #e4e6eb; }
-        body.theme-dark .side-panel, body.theme-dark .game-controls { background-color: #242526; border: 1px solid #3a3b3c; }
-        body.theme-dark #board { border: 8px solid #4d4d4d; }
-        body.theme-dark #moveHistory { background-color: #3a3b3c; }
-        body.theme-dark select, body.theme-dark input { background-color: #3a3b3c; color: #e4e6eb; border-color: #555; }
-
-        body.theme-blue { background-color: #1a237e; color: #e8eaf6; }
-        body.theme-blue .side-panel, body.theme-blue .game-controls { background-color: #283593; border: 1px solid #3f51b5; }
-        body.theme-blue #board { border: 8px solid #3f51b5; }
-        body.theme-blue #moveHistory { background-color: #3f51b5; }
-
-        body.theme-green { background-color: #2e7d32; color: #e8f5e9; }
-        body.theme-green .side-panel, body.theme-green .game-controls { background-color: #388e3c; border: 1px solid #4caf50; }
-        body.theme-green #board { border: 8px solid #4caf50; }
-        body.theme-green #moveHistory { background-color: #66bb6a; }
-
-        body.theme-wood { background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'); background-color: #8d6e63; color: #ffffff; }
-        body.theme-wood .side-panel, body.theme-wood .game-controls { background-color: rgba(93, 64, 55, 0.85); border: 1px solid #a1887f; backdrop-filter: blur(5px); }
-        body.theme-wood #board { border: 8px solid #5d4037; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        body.theme-wood #moveHistory { background-color: #a1887f; }
-
-        .board-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        body.theme-dark {
+            --bg-color: #18191a; --text-color: #e4e6eb; --panel-bg-color: #242526;
+            --panel-border-color: #3a3b3c; --board-border-color: #4d4d4d;
+            --history-bg-color: #3a3b3c; --input-bg-color: #3a3b3c; --input-text-color: #e4e6eb;
         }
-
-        #board {
-            width: clamp(320px, 90vw, 600px);
-            box-shadow: var(--shadow);
-            border-radius: 4px;
+        body.theme-blue {
+            --bg-color: #1a237e; --text-color: #e8eaf6; --panel-bg-color: #283593;
+            --panel-border-color: #3f51b5; --board-border-color: #3f51b5;
+            --history-bg-color: #3f51b5;
         }
+        body.theme-green {
+            --bg-color: #2e7d32; --text-color: #e8f5e9; --panel-bg-color: #388e3c;
+            --panel-border-color: #4caf50; --board-border-color: #4caf50;
+            --history-bg-color: #66bb6a;
+        }
+        body.theme-wood {
+            --bg-color: #8d6e63; --text-color: #ffffff;
+            --panel-bg-color: rgba(93, 64, 55, 0.85); --panel-border-color: #a1887f;
+            --board-border-color: #5d4037;
+            background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+        }
+        body.theme-wood .panel, body.theme-wood header { backdrop-filter: blur(5px); }
 
-        .side-panel {
-            width: 250px;
-            padding: 20px;
+        /* --- Layout Components --- */
+        header.app-header {
+            padding: 1rem 1.5rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
+            background-color: var(--panel-bg-color);
+            border: 1px solid var(--panel-border-color);
+        }
+        .header-content { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
+        .header-title h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 1.75rem); }
+        .room-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; align-items: center; }
+        .status-indicators { font-weight: 500; font-size: 0.9em; text-align: center; }
+
+        main.game-layout {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 1.5rem;
         }
+        .panel {
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            background-color: var(--panel-bg-color);
+            border: 1px solid var(--panel-border-color);
+            transition: background-color var(--transition-speed), border-color var(--transition-speed);
+        }
+        .panel h3 { margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid var(--panel-border-color); }
+        .board-area { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        #board { width: 100%; max-width: 60vh; box-shadow: var(--shadow); border-radius: 4px; border: 8px solid var(--board-border-color); }
 
-        .side-panel h3 {
-            margin: 0 0 10px 0;
-            font-weight: 500;
-            padding-bottom: 5px;
-            border-bottom: 2px solid;
-            border-color: inherit;
-        }
-
-        .captured-pieces {
-            min-height: 40px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        .captured-pieces img { width: 32px; height: 32px; }
-
-        #moveHistory {
-            height: 400px;
-            overflow-y: auto;
-            border-radius: 4px;
-            padding: 10px;
-            font-family: 'Courier New', monospace;
-        }
-        .move-row { display: flex; padding: 4px 2px; border-radius: 3px; }
+        #moveHistory { height: 300px; overflow-y: auto; border-radius: 4px; padding: 0.5rem; font-family: var(--font-family-mono); font-size: 0.9rem; background-color: var(--history-bg-color); }
+        .move-row { display: flex; padding: 0.3rem 0.2rem; border-radius: 3px; }
         .move-row:nth-child(odd) { background-color: rgba(0,0,0,0.05); }
-        .move-number { width: 35px; color: #888; font-weight: bold; }
-        .move { flex: 1; padding: 0 5px; }
+        .move-number { width: 2.5em; color: #888; font-weight: bold; }
+        .move { flex: 1; padding: 0 0.5em; }
 
-        /* --- Board Highlights --- */
-        .highlight-legal { box-shadow: inset 0 0 3px 3px rgba(255, 255, 0, 0.7); }
-        .highlight-selected { box-shadow: inset 0 0 3px 3px rgba(20, 85, 30, 0.8); }
-        .highlight-last-move { background-color: rgba(155, 199, 0, 0.41); }
-        .highlight-premove { background-color: rgba(255, 165, 0, 0.5); }
-        .highlight-check {
-            background: radial-gradient(ellipse at center, rgba(255,0,0,0.6) 0%, rgba(255,0,0,0) 70%);
-        }
+        .captured-pieces-container { min-height: 40px; }
+        .captured-pieces { display: flex; flex-wrap: wrap; gap: 5px; }
+        .captured-pieces img { width: 32px; height: 32px; transition: transform 0.2s; }
+        .captured-pieces img:hover { transform: scale(1.1); }
 
-        .game-controls {
-            width: 100%;
-            padding: 20px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 900px;
-        }
-
-        .room-actions { display: flex; justify-content: center; gap: 10px; align-items: center; }
-        
-        button {
-            padding: 12px 24px;
-            font-size: 16px;
-            border: none;
-            border-radius: var(--border-radius);
-            background: #2196F3;
-            color: white;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s;
-            font-weight: 500;
-        }
-        button:hover:not(:disabled) { background: #1976D2; transform: translateY(-2px); }
+        /* --- UI Elements & Highlights --- */
+        .highlight-last-move { background-color: rgba(155, 199, 0, 0.45) !important; }
+        .highlight-premove { background-color: rgba(255, 165, 0, 0.55) !important; }
+        .highlight-check { box-shadow: inset 0 0 15px 5px rgba(255,0,0,0.6) !important; }
+        button { padding: 0.75rem 1.5rem; font-size: 1rem; border: none; border-radius: var(--border-radius); background: #2196F3; color: white; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+        button:hover:not(:disabled) { background: #1976D2; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         button:disabled { background: #ccc; cursor: not-allowed; }
+        input { padding: 0.75rem; font-size: 1rem; border: 1px solid var(--panel-border-color); border-radius: var(--border-radius); text-align: center; width: 180px; text-transform: uppercase; background-color: var(--input-bg-color); color: var(--input-text-color); }
         
-        #roomCodeInput {
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            text-align: center;
-            width: 180px;
-            text-transform: uppercase;
-        }
+        /* --- Overlays & Popups --- */
+        .theme-switcher { position: fixed; top: 1rem; right: 1rem; z-index: 1000; }
+        #messageContainer { position: fixed; top: 6rem; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; align-items: center;}
+        .message { padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); font-weight: 500; opacity: 0; transition: all 0.5s; transform: translateY(-20px); }
+        .message.show { opacity: 1; transform: translateY(0); }
+        .message-success { background: #4caf50; color: white; }
+        .message-error { background: #f44336; color: white; }
+        .message-info { background: #2196F3; color: white; }
+        #errorLogContainer { position: fixed; bottom: 1rem; right: 1rem; z-index: 1001; }
+        #errorLog { display: none; width: 350px; max-height: 200px; background: rgba(0,0,0,0.85); color: #fff; border-radius: var(--border-radius); padding: 1rem; font-family: var(--font-family-mono); font-size: 0.75rem; overflow-y: auto; margin-bottom: 0.5rem; }
+        .game-end-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 999; justify-content: center; align-items: center; }
+        .game-end-message { background: var(--panel-bg-color); padding: 2.5rem; border-radius: 10px; text-align: center; color: var(--text-color); }
         
-        #status, #roomStatus, #connectionStatus { font-weight: 500; font-size: 1.1em; height: 25px; }
-        .theme-switcher { position: fixed; top: 15px; right: 15px; z-index: 1000; }
-        #themeSelect { padding: 8px; border-radius: 4px; border: 1px solid #ddd; }
-
-        .game-end-overlay {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 999;
-            justify-content: center; align-items: center;
-        }
-        .game-end-message {
-            background: white; padding: 40px; border-radius: 10px;
-            text-align: center; color: black;
+        /* --- Responsive Layout --- */
+        @media (min-width: 1024px) {
+            main.game-layout { flex-direction: row; align-items: flex-start; gap: 2rem; }
+            .panel { width: 320px; flex-shrink: 0; }
+            .board-area { flex-grow: 1; }
+            #board { max-width: 80vh; }
+            #moveHistory { height: 50vh; min-height: 400px; }
         }
     </style>
 </head>
 <body class="theme-light">
 
+    <div class="app-wrapper">
+        <div class="app-container">
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="header-title"><h1>Chess Online</h1></div>
+                    <div class="room-controls">
+                        <button id="createRoomBtn">Create Room</button>
+                        <span>or</span>
+                        <input type="text" id="roomCodeInput" placeholder="Enter Room Code" maxlength="6">
+                        <button id="joinRoomBtn">Join Room</button>
+                    </div>
+                    <div class="status-indicators">
+                        <div id="connectionStatus">Connecting...</div>
+                        <div id="roomStatus">No room joined.</div>
+                    </div>
+                </div>
+            </header>
+    
+            <main class="game-layout">
+                <div class="panel left-panel">
+                    <h3>White's Captures</h3>
+                    <div class="captured-pieces-container" id="capturedByBlack"></div>
+                    <h3>Move History</h3>
+                    <div id="moveHistory"></div>
+                </div>
+    
+                <div class="board-area">
+                    <div id="board"></div>
+                    <h2 id="status">Create or join a room to play.</h2>
+                </div>
+                
+                <div class="panel right-panel">
+                    <h3>Black's Captures</h3>
+                    <div class="captured-pieces-container" id="capturedByWhite"></div>
+                    <h3>Game Info</h3>
+                    <div id="playerInfo">Your color: N/A</div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="messageContainer"></div>
     <div class="theme-switcher">
         <select id="themeSelect">
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="blue">Blue</option>
-            <option value="green">Green</option>
-            <option value="wood">Wood</option>
+            <option value="light">Light</option> <option value="dark">Dark</option> <option value="blue">Blue</option> <option value="green">Green</option> <option value="wood">Wood</option>
         </select>
     </div>
-
+    <div id="errorLogContainer">
+        <div id="errorLog"></div>
+        <button id="toggleErrorLogBtn">Toggle Errors</button>
+    </div>
     <div class="game-end-overlay">
         <div class="game-end-message">
             <h2 id="endGameMessage"></h2>
             <p>Refresh the page to start a new game.</p>
         </div>
     </div>
-
-    <div class="container">
-        <div class="side-panel">
-            <h3>White's Captures</h3>
-            <div id="capturedByBlack" class="captured-pieces"></div>
-            <h3>Move History</h3>
-            <div id="moveHistory"></div>
-        </div>
-
-        <div class="board-wrapper">
-            <div class="game-controls">
-                <h1>Chess Online</h1>
-                <div id="connectionStatus">Connecting...</div>
-                <div id="status">Create or join a room to play.</div>
-                <div id="roomStatus"></div>
-                <div class="room-actions">
-                    <button id="createRoomBtn">Create Room</button>
-                    <span>or</span>
-                    <input type="text" id="roomCodeInput" placeholder="Enter Room Code" maxlength="6">
-                    <button id="joinRoomBtn">Join Room</button>
-                </div>
-            </div>
-            <div id="board" style="margin-top: 20px;"></div>
-        </div>
-        
-        <div class="side-panel">
-            <h3>Black's Captures</h3>
-            <div id="capturedByWhite" class="captured-pieces"></div>
-            <h3>Game Info</h3>
-            <div id="playerInfo">Your color: N/A</div>
-        </div>
-    </div>
-
+    
     <audio id="moveSound" src="https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/move-self.mp3" preload="auto"></audio>
     <audio id="captureSound" src="https://images.chesscomfiles.com/chess-themes/sounds/_MP3_/default/capture.mp3" preload="auto"></audio>
 
@@ -236,275 +220,369 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        /**
+         * @file Manages the entire client-side chess game experience.
+         * This script is structured into multiple classes for better organization and scalability.
+         * - UIManager: Handles all DOM manipulations.
+         * - SocketManager: Manages all communication with the server via Socket.IO.
+         * - ChessGame: The main controller that orchestrates the other managers and holds the game state.
+         */
         $(function() {
-            class ChessGame {
+            /**
+             * Manages all interactions with the DOM.
+             * @class UIManager
+             */
+            class UIManager {
                 constructor() {
-                    this.socket = io({
-                        reconnection: true,
-                        reconnectionAttempts: 5,
-                        reconnectionDelay: 1000,
-                    });
-                    this.board = null;
-                    this.game = new Chess();
-                    this.playerColor = null;
-                    this.currentRoom = null;
-                    this.selectedSquare = null;
-                    this.premove = null;
-
                     this.elements = {
-                        status: $('#status'),
-                        roomStatus: $('#roomStatus'),
-                        connectionStatus: $('#connectionStatus'),
-                        moveHistory: $('#moveHistory'),
-                        capturedByWhite: $('#capturedByWhite'),
-                        capturedByBlack: $('#capturedByBlack'),
-                        createRoomBtn: $('#createRoomBtn'),
-                        joinRoomBtn: $('#joinRoomBtn'),
-                        roomCodeInput: $('#roomCodeInput'),
-                        playerInfo: $('#playerInfo'),
-                        endGameOverlay: $('.game-end-overlay'),
-                        endGameMessage: $('#endGameMessage'),
+                        status: $('#status'), roomStatus: $('#roomStatus'), connectionStatus: $('#connectionStatus'),
+                        moveHistory: $('#moveHistory'), capturedByWhite: $('#capturedByWhite'), capturedByBlack: $('#capturedByBlack'),
+                        createRoomBtn: $('#createRoomBtn'), joinRoomBtn: $('#joinRoomBtn'), roomCodeInput: $('#roomCodeInput'),
+                        playerInfo: $('#playerInfo'), endGameOverlay: $('.game-end-overlay'), endGameMessage: $('#endGameMessage'),
+                        messageContainer: $('#messageContainer'), errorLog: $('#errorLog'), toggleErrorLogBtn: $('#toggleErrorLogBtn'),
+                        themeSelect: $('#themeSelect'), board: $('#board')
                     };
-                    
                     this.sounds = {
                         move: $('#moveSound')[0],
                         capture: $('#captureSound')[0],
                     };
-
-                    this.bindSocketEvents();
+                    this.errors = [];
                     this.bindUIEvents();
-                    this.initBoard();
                 }
 
-                // --- Event Binding ---
-                bindSocketEvents() {
-                    this.socket.on('connect', () => this.updateConnectionStatus('Connected', true));
-                    this.socket.on('disconnect', () => this.updateConnectionStatus('Disconnected', false));
-                    this.socket.on('reconnecting', () => this.updateConnectionStatus('Reconnecting...', false));
-
-                    this.socket.on('roomCreated', (data) => this.handleRoomCreated(data));
-                    this.socket.on('gameStart', (data) => this.handleGameStart(data));
-                    this.socket.on('moveMade', (data) => this.handleMoveMade(data));
-                    this.socket.on('gameOver', (message) => this.handleGameOver(message));
-                    this.socket.on('playerLeft', (message) => this.handleGameOver(message));
-                    this.socket.on('roomError', (message) => alert(message));
-                }
-
+                /** Binds general UI events like theme switching and error log toggling. */
                 bindUIEvents() {
-                    this.elements.createRoomBtn.on('click', () => this.socket.emit('createRoom'));
-                    this.elements.joinRoomBtn.on('click', () => {
-                        const roomCode = this.elements.roomCodeInput.val().trim().toUpperCase();
-                        if (roomCode) this.socket.emit('joinRoom', roomCode);
-                    });
-                     $('#themeSelect').on('change', (e) => {
-                        $('body').removeClass().addClass(`theme-${$(e.target).val()}`);
-                    });
+                    this.elements.themeSelect.on('change', (e) => this.setTheme($(e.target).val()));
+                    this.elements.toggleErrorLogBtn.on('click', () => this.elements.errorLog.toggle());
+                }
+
+                /** Sets the color theme for the page. */
+                setTheme(theme) {
+                    $('body').removeClass().addClass(`theme-${theme}`);
                 }
                 
-                // --- Board and Game Logic ---
-                initBoard() {
-                    this.board = Chessboard('board', {
-                        draggable: true,
-                        position: 'start',
-                        onDragStart: (source, piece) => this.onDragStart(source, piece),
-                        onDrop: (source, target) => this.onDrop(source, target),
-                        onSnapEnd: () => this.board.position(this.game.fen()),
-                    });
-                    $(window).resize(this.board.resize);
-                }
-                
-                onDragStart(source, piece) {
-                    if (this.game.isGameOver() || !this.playerColor) return false;
-                    if (this.game.turn() !== this.playerColor) return false;
-                    if (piece.search(new RegExp(`^${this.playerColor}`)) === -1) return false;
+                /**
+                 * Displays a temporary message to the user.
+                 * @param {string} text - The message to display.
+                 * @param {('info'|'success'|'error')} type - The type of message.
+                 */
+                showMessage(text, type = 'info') {
+                    const msg = $(`<div class="message message-${type}">${text}</div>`);
+                    this.elements.messageContainer.append(msg);
+                    setTimeout(() => msg.addClass('show'), 10);
+                    setTimeout(() => {
+                        msg.removeClass('show');
+                        setTimeout(() => msg.remove(), 500);
+                    }, 4000);
                 }
 
-                onDrop(source, target) {
-                    if (source === target) return;
-                    
-                    // If it's not our turn, register a premove
-                    if (this.game.turn() !== this.playerColor) {
-                        this.setPremove(source, target);
-                        return 'snapback';
-                    }
-
-                    this.makeMove(source, target);
-                }
-                
-                makeMove(from, to) {
-                    const move = this.game.move({ from, to, promotion: 'q' });
-                    
-                    if (move === null) {
-                        return 'snapback';
-                    }
-
-                    this.socket.emit('move', {
-                        roomCode: this.currentRoom,
-                        from,
-                        to,
-                    });
+                /**
+                 * Logs an error to the console and the on-screen error log.
+                 * @param {Error} error - The error object.
+                 * @param {string} [context='General'] - The context where the error occurred.
+                 */
+                logError(error, context = 'General') {
+                    console.error(`[${context}]`, error);
+                    const entry = `<div>${new Date().toLocaleTimeString()} [${context}]: ${error.message}</div>`;
+                    this.errors.push(entry);
+                    if (this.errors.length > 20) this.errors.shift();
+                    this.elements.errorLog.html(this.errors.join(''));
                 }
 
-                setPremove(from, to) {
-                    this.clearPremoveHighlight();
-                    this.premove = { from, to };
-                    $(`.square-${from}`).addClass('highlight-premove');
-                    $(`.square-${to}`).addClass('highlight-premove');
-                    this.elements.status.text(`Premove set: ${from}-${to}`);
+                /** Updates the connection status indicator. */
+                updateConnectionStatus(text, type) {
+                    const color = type === 'success' ? '#4caf50' : (type === 'error' ? '#f44336' : '#2196F3');
+                    this.elements.connectionStatus.text(text).css('color', color);
                 }
 
-                tryPremove() {
-                    if (this.premove && this.game.turn() === this.playerColor) {
-                        const { from, to } = this.premove;
-                        this.premove = null;
-                        this.clearPremoveHighlight();
-                        this.makeMove(from, to);
+                /** Updates the room status text. */
+                setRoomStatus(text) { this.elements.roomStatus.text(text); }
+                /** Updates the main game status text. */
+                setGameStatus(text) { this.elements.status.text(text); }
+                /** Updates the player info text. */
+                setPlayerInfo(text) { this.elements.playerInfo.text(text); }
+
+                /** Plays a game sound. */
+                playSound(isCapture) {
+                    try {
+                        const sound = isCapture ? this.sounds.capture : this.sounds.move;
+                        sound.currentTime = 0;
+                        sound.play();
+                    } catch (e) {
+                        this.logError(e, "Audio");
                     }
                 }
-                
-                // --- Socket Event Handlers ---
-                handleRoomCreated(data) {
-                    this.currentRoom = data.roomCode;
-                    this.elements.roomStatus.text(`Room Code: ${this.currentRoom} - Waiting for opponent...`);
-                    this.elements.createRoomBtn.prop('disabled', true);
-                    this.elements.joinRoomBtn.prop('disabled', true);
-                }
-                
-                handleGameStart(data) {
-                    this.playerColor = this.socket.id === data.white ? 'w' : 'b';
-                    this.board.orientation(this.playerColor === 'w' ? 'white' : 'black');
-                    this.elements.playerInfo.text(`You are ${this.playerColor === 'w' ? 'White' : 'Black'}`);
-                    this.elements.roomStatus.text(`Game started in room ${this.currentRoom}!`);
-                    this.elements.createRoomBtn.hide();
-                    this.elements.joinRoomBtn.hide();
-                    this.elements.roomCodeInput.hide();
-                    this.updateAll();
-                }
 
-                handleMoveMade(data) {
-                    const move = this.game.move({ from: data.from, to: data.to, promotion: 'q' });
-                    if (move) {
-                        this.playSound(move.captured);
-                        this.updateAll();
-                        this.highlightLastMove(data.from, data.to);
-                        if (this.game.turn() === this.playerColor) {
-                            this.tryPremove();
-                        }
-                    }
-                }
-                
-                handleGameOver(message) {
-                    this.elements.endGameMessage.text(message);
-                    this.elements.endGameOverlay.css('display', 'flex');
-                }
-
-                // --- UI and State Updates ---
-                updateAll() {
-                    this.board.position(this.game.fen());
-                    this.updateStatus();
-                    this.updateMoveHistory();
-                    this.updateCapturedPieces();
-                    this.highlightKingInCheck();
-                }
-
-                updateStatus() {
-                    let statusText = '';
-                    const turn = this.game.turn() === 'w' ? 'White' : 'Black';
-
-                    if (this.game.isCheckmate()) {
-                        statusText = `Checkmate! ${turn === 'White' ? 'Black' : 'White'} wins.`;
-                    } else if (this.game.isDraw()) {
-                        statusText = 'Draw!';
-                    } else {
-                        statusText = `${turn}'s turn.`;
-                        if (this.game.in_check()) {
-                            statusText += ' (in check)';
-                        }
-                    }
-                    this.elements.status.text(statusText);
-                }
-                
-                updateMoveHistory() {
-                    const history = this.game.history({ verbose: true });
+                /** Renders the move history panel. */
+                updateMoveHistory(history) {
                     this.elements.moveHistory.empty();
                     for (let i = 0; i < history.length; i += 2) {
-                        const moveNumber = i / 2 + 1;
+                        const moveNum = i / 2 + 1;
                         const whiteMove = history[i] ? history[i].san : '';
-                        const blackMove = history[i+1] ? history[i+1].san : '';
-                        this.elements.moveHistory.append(
-                            `<div class="move-row">
-                                <span class="move-number">${moveNumber}.</span>
-                                <span class="move">${whiteMove}</span>
-                                <span class="move">${blackMove}</span>
-                            </div>`
-                        );
+                        const blackMove = history[i + 1] ? history[i + 1].san : '';
+                        const row = `<div class="move-row">
+                                       <span class="move-number">${moveNum}.</span>
+                                       <span class="move">${whiteMove}</span>
+                                       <span class="move">${blackMove}</span>
+                                     </div>`;
+                        this.elements.moveHistory.append(row);
                     }
                     this.elements.moveHistory.scrollTop(this.elements.moveHistory[0].scrollHeight);
                 }
 
-                updateCapturedPieces() {
-                    const initialCounts = { p: 8, r: 2, n: 2, b: 2, q: 1 };
-                    const capturedBy = { w: [], b: [] };
-                    const pieceChars = Object.keys(initialCounts);
-                    
-                    const fen = this.game.fen().split(' ')[0];
-                    
-                    pieceChars.forEach(p => {
-                        const whitePiece = new RegExp(p.toUpperCase(), "g");
-                        const blackPiece = new RegExp(p.toLowerCase(), "g");
-                        const whiteCount = (fen.match(whitePiece) || []).length;
-                        const blackCount = (fen.match(blackPiece) || []).length;
-                        
-                        for (let i = 0; i < initialCounts[p] - whiteCount; i++) capturedBy.b.push(`w${p.toUpperCase()}`);
-                        for (let i = 0; i < initialCounts[p] - blackCount; i++) capturedBy.w.push(`b${p.toUpperCase()}`);
-                    });
+                /** Renders the captured pieces panels. */
+                updateCapturedPieces(game) {
+                    const initial = { p: 8, r: 2, n: 2, b: 2, q: 1 };
+                    let captured = { w: [], b: [] }; // Pieces captured by White (b) and Black (w)
+                    const fen = game.fen().split(' ')[0];
+                    for (const p in initial) {
+                        const whiteCount = (fen.match(new RegExp(p.toUpperCase(), "g")) || []).length;
+                        const blackCount = (fen.match(new RegExp(p.toLowerCase(), "g")) || []).length;
+                        for (let i = 0; i < initial[p] - whiteCount; i++) captured.b.push(`w${p.toUpperCase()}`);
+                        for (let i = 0; i < initial[p] - blackCount; i++) captured.w.push(`b${p.toUpperCase()}`);
+                    }
+                    const url = piece => `https://chessboardjs.com/img/chesspieces/wikipedia/${piece}.png`;
+                    const capturedByWhiteHtml = captured.w.map(p => `<img src="${url(p)}" alt="${p}">`).join('');
+                    const capturedByBlackHtml = captured.b.map(p => `<img src="${url(p)}" alt="${p}">`).join('');
+                    this.elements.capturedByWhite.html(`<div class="captured-pieces">${capturedByWhiteHtml}</div>`);
+                    this.elements.capturedByBlack.html(`<div class="captured-pieces">${capturedByBlackHtml}</div>`);
+                }
 
-                    const pieceUrl = (p) => `https://chessboardjs.com/img/chesspieces/wikipedia/${p}.png`;
-                    this.elements.capturedByWhite.html(capturedBy.w.map(p => `<img src="${pieceUrl(p)}" alt="${p}">`).join(''));
-                    this.elements.capturedByBlack.html(capturedBy.b.map(p => `<img src="${pieceUrl(p)}" alt="${p}">`).join(''));
+                /** Clears all highlights from the board. */
+                clearAllHighlights() {
+                    this.elements.board.find('.square-55d63').removeClass('highlight-last-move highlight-premove highlight-check');
                 }
                 
-                highlightLastMove(from, to) {
-                    $('.square-55d63').removeClass('highlight-last-move');
-                    $(`.square-${from}`).addClass('highlight-last-move');
-                    $(`.square-${to}`).addClass('highlight-last-move');
+                /** Highlights the specified squares on the board. */
+                highlightSquares(className, ...squares) {
+                    squares.forEach(sq => this.elements.board.find(`.square-${sq}`).addClass(className));
+                }
+                
+                /** Shows the game over overlay. */
+                showGameOver(message) {
+                    this.elements.endGameMessage.text(message);
+                    this.elements.endGameOverlay.css('display', 'flex');
                 }
 
-                clearPremoveHighlight() {
-                    $('.square-55d63').removeClass('highlight-premove');
+                /** Configures the UI for the start of a game. */
+                setupGameStart() {
+                    this.elements.createRoomBtn.prop('disabled', true);
+                    this.elements.joinRoomBtn.prop('disabled', true);
+                    $('.room-controls').fadeOut();
+                }
+            }
+
+            /**
+             * Manages the Socket.IO connection and events.
+             * @class SocketManager
+             */
+            class SocketManager {
+                constructor(gameController) {
+                    this.game = gameController;
+                    this.socket = io({ reconnection: true, reconnectionAttempts: 5, reconnectionDelay: 1000 });
+                    this.bindSocketEvents();
                 }
 
-                highlightKingInCheck() {
-                    $('.square-55d63').removeClass('highlight-check');
-                    if (this.game.in_check()) {
-                        const kingPos = this.findKing(this.game.turn());
-                        if (kingPos) {
-                            $(`.square-${kingPos}`).addClass('highlight-check');
-                        }
+                /** Binds all incoming socket events to controller methods. */
+                bindSocketEvents() {
+                    this.socket.on('connect', () => this.game.onConnect());
+                    this.socket.on('disconnect', () => this.game.onDisconnect());
+                    this.socket.on('reconnecting', () => this.game.onReconnecting());
+                    this.socket.on('roomCreated', data => this.game.onRoomCreated(data));
+                    this.socket.on('gameStart', data => this.game.onGameStart(data));
+                    this.socket.on('moveMade', data => this.game.onMoveMade(data));
+                    this.socket.on('gameOver', msg => this.game.onGameOver(msg));
+                    this.socket.on('playerLeft', msg => this.game.onPlayerLeft(msg));
+                    this.socket.on('roomError', msg => this.game.onRoomError(msg));
+                }
+
+                /** Emits an event to the server. */
+                emit(event, data) {
+                    this.socket.emit(event, data);
+                }
+            }
+            
+            /**
+             * The main controller for the chess game.
+             * @class ChessGame
+             */
+            class ChessGame {
+                constructor() {
+                    this.ui = new UIManager();
+                    this.socket = new SocketManager(this);
+                    this.game = new Chess();
+                    this.board = null;
+                    this.state = {
+                        playerColor: null, currentRoom: null, premove: null,
+                        isMyTurn: false, isGameOver: false, pendingMove: false,
+                    };
+                    this.idleTimer = null;
+                    this.init();
+                }
+
+                /** Initializes the game board and event listeners. */
+                init() {
+                    try {
+                        this.board = Chessboard('board', {
+                            draggable: true, position: 'start', onDragStart: (s, p) => this.onDragStart(s, p),
+                            onDrop: (s, t) => this.onDrop(s, t), onSnapEnd: () => this.board.position(this.game.fen())
+                        });
+                        $(window).resize(() => this.board.resize());
+                        this.ui.elements.createRoomBtn.on('click', () => this.socket.emit('createRoom'));
+                        this.ui.elements.joinRoomBtn.on('click', () => {
+                            const roomCode = this.ui.elements.roomCodeInput.val().trim().toUpperCase();
+                            if (roomCode) this.socket.emit('joinRoom', roomCode);
+                        });
+                        this.startIdleTimer();
+                    } catch (e) {
+                        this.ui.logError(e, "Initialization");
+                        this.ui.showMessage("A critical error occurred on startup.", "error");
                     }
                 }
 
-                findKing(color) {
-                    const board = this.game.board();
-                    for (let i = 0; i < 8; i++) {
-                        for (let j = 0; j < 8; j++) {
-                            const piece = board[i][j];
-                            if (piece && piece.type === 'k' && piece.color === color) {
-                                return String.fromCharCode(97 + j) + (8 - i);
+                // --- Board Interaction ---
+                onDragStart(source, piece) {
+                    if (this.state.isGameOver || !this.state.isMyTurn) return false;
+                    return piece.startsWith(this.state.playerColor);
+                }
+                onDrop(source, target) {
+                    this.resetIdleTimer();
+                    if (source === target) return;
+                    if (this.state.isMyTurn) {
+                        this.attemptMove(source, target);
+                    } else if (!this.state.isGameOver) {
+                        this.setPremove(source, target);
+                    }
+                }
+                
+                // --- Game Logic ---
+                attemptMove(from, to) {
+                    if (this.state.pendingMove) {
+                        this.ui.showMessage("Waiting for previous move...", "info");
+                        return;
+                    }
+                    const move = this.game.move({ from, to, promotion: 'q' });
+                    if (move === null) {
+                        return; // Invalid move, board will snap back.
+                    }
+                    this.state.pendingMove = true;
+                    this.state.isMyTurn = false;
+                    this.socket.emit('move', { roomCode: this.state.currentRoom, from, to });
+                    this.updateUI();
+                }
+                setPremove(from, to) {
+                    this.state.premove = { from, to };
+                    this.ui.clearAllHighlights();
+                    this.ui.highlightSquares('highlight-premove', from, to);
+                    this.ui.setGameStatus(`Premove set: ${from}-${to}`);
+                }
+                tryPremove() {
+                    if (this.state.premove && this.state.isMyTurn) {
+                        const { from, to } = this.state.premove;
+                        this.state.premove = null;
+                        this.ui.clearAllHighlights();
+                        this.attemptMove(from, to);
+                    }
+                }
+
+                // --- Socket Event Handlers ---
+                onConnect() { this.ui.updateConnectionStatus('Connected', 'success'); }
+                onDisconnect() { this.ui.updateConnectionStatus('Disconnected', 'error'); }
+                onReconnecting() { this.ui.updateConnectionStatus('Reconnecting...', 'info'); }
+                onRoomError(msg) { this.ui.showMessage(msg, 'error'); }
+                onRoomCreated(data) {
+                    this.state.currentRoom = data.roomCode;
+                    this.ui.setRoomStatus(`Room: ${this.state.currentRoom} - Waiting...`);
+                    this.ui.showMessage(`Room ${this.state.currentRoom} created!`, 'success');
+                }
+                onGameStart(data) {
+                    this.state.playerColor = this.socket.socket.id === data.white ? 'w' : 'b';
+                    this.state.isMyTurn = (this.state.playerColor === 'w');
+                    this.board.orientation(this.state.playerColor === 'w' ? 'white' : 'black');
+                    this.ui.setPlayerInfo(`You are ${this.state.playerColor === 'w' ? 'White' : 'Black'}`);
+                    this.ui.setRoomStatus(`Game started in room ${this.state.currentRoom}!`);
+                    this.ui.showMessage("Game started!", "success");
+                    this.ui.setupGameStart();
+                    this.updateUI();
+                }
+                onMoveMade(data) {
+                    this.state.pendingMove = false;
+                    const move = this.game.move({ from: data.from, to: data.to, promotion: 'q' });
+                    if (move) {
+                        this.state.isMyTurn = this.game.turn() === this.state.playerColor;
+                        this.ui.playSound(move.captured);
+                        this.updateUI();
+                        this.ui.clearAllHighlights();
+                        this.ui.highlightSquares('highlight-last-move', data.from, data.to);
+                        if (this.state.isMyTurn) this.tryPremove();
+                    } else {
+                        this.ui.logError(new Error("Received an invalid move from server."), "Sync");
+                    }
+                }
+                onGameOver(message) {
+                    this.state.isGameOver = true;
+                    this.state.isMyTurn = false;
+                    this.ui.showGameOver(message);
+                    this.updateUI();
+                }
+                onPlayerLeft(message) {
+                    this.onGameOver(message);
+                }
+
+                // --- UI Update Orchestration ---
+                updateUI() {
+                    try {
+                        this.board.position(this.game.fen(), false);
+                        this.ui.updateMoveHistory(this.game.history({ verbose: true }));
+                        this.ui.updateCapturedPieces(this.game);
+                        this.updateStatusText();
+                        this.highlightCheck();
+                    } catch (e) {
+                        this.ui.logError(e, "UI Update");
+                    }
+                }
+                updateStatusText() {
+                    if (this.state.isGameOver) return; // Game over message is handled by overlay
+                    let text;
+                    const turn = this.game.turn() === 'w' ? 'White' : 'Black';
+                    if (this.game.isCheckmate()) text = `Checkmate! ${turn === 'White' ? 'Black' : 'White'} wins.`;
+                    else if (this.game.isDraw()) text = 'Draw!';
+                    else {
+                        text = this.state.isMyTurn ? "Your turn" : `${turn}'s turn`;
+                        if (this.game.in_check()) text += ' (in check)';
+                    }
+                    this.ui.setGameStatus(text);
+                }
+                highlightCheck() {
+                    this.ui.elements.board.find('.square-55d63').removeClass('highlight-check');
+                    if (this.game.in_check()) {
+                        const board = this.game.board();
+                        for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
+                            const p = board[i][j];
+                            if (p && p.type === 'k' && p.color === this.game.turn()) {
+                                this.ui.highlightSquares('highlight-check', `${String.fromCharCode(97+j)}${8-i}`);
+                                return;
                             }
                         }
                     }
-                    return null;
                 }
-                
-                updateConnectionStatus(text, isConnected) {
-                    this.elements.connectionStatus.text(text).css('color', isConnected ? '#4caf50' : '#f44336');
+
+                // --- Timers ---
+                startIdleTimer() {
+                    $(document).on('click mousemove keydown', () => this.resetIdleTimer());
+                    this.resetIdleTimer();
                 }
-                
-                playSound(isCapture) {
-                    (isCapture ? this.sounds.capture : this.sounds.move).play().catch(e => console.log("Audio play failed."));
+                resetIdleTimer() {
+                    clearTimeout(this.idleTimer);
+                    this.idleTimer = setTimeout(() => {
+                        this.socket.socket.disconnect();
+                        this.ui.logError(new Error("Disconnected due to inactivity."));
+                        this.ui.showMessage("Disconnected due to inactivity.", "error");
+                    }, 300000); // 5 minutes
                 }
             }
+            
+            // --- Entry Point ---
             window.chessGame = new ChessGame();
         });
     </script>
