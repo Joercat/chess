@@ -132,8 +132,8 @@
         }
 
         /* THIS IS THE CRITICAL FIX FOR PIECES NOT SHOWING */
-        #board .piece-417db {
-            z-index: 100;
+        .chessboard-b72b1 .piece-417db {
+            z-index: 100 !important;
         }
 
         #moveHistory { height: 300px; overflow-y: auto; border-radius: 4px; padding: 0.5rem; font-family: var(--font-family-mono); font-size: 0.9rem; background-color: var(--history-bg-color); }
@@ -249,7 +249,7 @@
             </div>
 
             <main class="board-area">
-                <div id="board"></div>
+                <div id="board" class="chessboard-b72b1"></div>
                 <h2 id="status">Create or join a room to play.</h2>
             </main>
             
