@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Online</title>
+    <title>Chess Online - Advanced</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,6 +25,8 @@
             --history-bg-color: #f7f7f7;
             --input-bg-color: #fff;
             --input-text-color: #000;
+            --button-color: #2196F3;
+            --button-hover-color: #1976D2;
         }
 
         *, *::before, *::after {
@@ -45,11 +47,12 @@
             align-items: center;
             min-height: 100vh;
             padding: 1rem;
+            overflow-x: hidden;
         }
 
         .app-container {
             width: 100%;
-            max-width: 1600px;
+            max-width: 1400px;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
@@ -60,22 +63,26 @@
             --bg-color: #18191a; --text-color: #e4e6eb; --panel-bg-color: #242526;
             --panel-border-color: #3a3b3c; --board-border-color: #4d4d4d;
             --history-bg-color: #3a3b3c; --input-bg-color: #3a3b3c; --input-text-color: #e4e6eb;
+            --button-color: #0b84fe; --button-hover-color: #0a78e7;
         }
         body.theme-blue {
             --bg-color: #1a237e; --text-color: #e8eaf6; --panel-bg-color: #283593;
             --panel-border-color: #3f51b5; --board-border-color: #3f51b5;
             --history-bg-color: #3f51b5;
+            --button-color: #e91e63; --button-hover-color: #c2185b;
         }
         body.theme-green {
             --bg-color: #2e7d32; --text-color: #e8f5e9; --panel-bg-color: #388e3c;
             --panel-border-color: #4caf50; --board-border-color: #4caf50;
             --history-bg-color: #66bb6a;
+            --button-color: #ff9800; --button-hover-color: #fb8c00;
         }
         body.theme-wood {
             --bg-color: #8d6e63; --text-color: #ffffff;
             --panel-bg-color: rgba(93, 64, 55, 0.85); --panel-border-color: #a1887f;
             --board-border-color: #5d4037;
             background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+            --button-color: #4e342e; --button-hover-color: #3e2723;
         }
         body.theme-wood .panel, body.theme-wood header { backdrop-filter: blur(5px); }
 
@@ -90,7 +97,7 @@
         .header-content { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
         .header-title h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 1.75rem); }
         .room-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; align-items: center; }
-        .status-indicators { font-weight: 500; font-size: 0.9em; text-align: center; }
+        .status-indicators { font-weight: 500; font-size: 0.9em; text-align: right; }
 
         main.game-layout {
             display: flex;
@@ -106,7 +113,7 @@
             transition: background-color var(--transition-speed), border-color var(--transition-speed);
         }
         .panel h3 { margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid var(--panel-border-color); }
-        .board-area { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .board-area { display: flex; flex-direction: column; align-items: center; gap: 1rem; flex-grow: 1; }
         #board { width: 100%; max-width: 60vh; box-shadow: var(--shadow); border-radius: 4px; border: 8px solid var(--board-border-color); }
 
         #moveHistory { height: 300px; overflow-y: auto; border-radius: 4px; padding: 0.5rem; font-family: var(--font-family-mono); font-size: 0.9rem; background-color: var(--history-bg-color); }
@@ -124,8 +131,8 @@
         .highlight-last-move { background-color: rgba(155, 199, 0, 0.45) !important; }
         .highlight-premove { background-color: rgba(255, 165, 0, 0.55) !important; }
         .highlight-check { box-shadow: inset 0 0 15px 5px rgba(255,0,0,0.6) !important; }
-        button { padding: 0.75rem 1.5rem; font-size: 1rem; border: none; border-radius: var(--border-radius); background: #2196F3; color: white; cursor: pointer; transition: all 0.2s; font-weight: 500; }
-        button:hover:not(:disabled) { background: #1976D2; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        button { padding: 0.75rem 1.5rem; font-size: 1rem; border: none; border-radius: var(--border-radius); background: var(--button-color); color: white; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+        button:hover:not(:disabled) { background: var(--button-hover-color); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         button:disabled { background: #ccc; cursor: not-allowed; }
         input { padding: 0.75rem; font-size: 1rem; border: 1px solid var(--panel-border-color); border-radius: var(--border-radius); text-align: center; width: 180px; text-transform: uppercase; background-color: var(--input-bg-color); color: var(--input-text-color); }
         
@@ -142,13 +149,55 @@
         .game-end-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 999; justify-content: center; align-items: center; }
         .game-end-message { background: var(--panel-bg-color); padding: 2.5rem; border-radius: 10px; text-align: center; color: var(--text-color); }
         
-        /* --- Responsive Layout --- */
+        /* --- Responsive Layout for All Devices --- */
+        @media (max-width: 1023px) {
+            .app-wrapper { padding: 0.5rem; }
+            .header-content { flex-direction: column; align-items: center; text-align: center; }
+            .status-indicators { text-align: center; }
+            .room-controls { flex-direction: column; width: 100%; }
+            .room-controls input, .room-controls button { width: 100%; }
+            .game-layout { gap: 1rem; }
+            .panel { padding: 1rem; }
+            .panel h3 { font-size: 1.1rem; }
+            #moveHistory { height: 200px; }
+            #errorLogContainer { width: 100%; right: auto; left: 0; bottom: 0; }
+            #errorLog { width: 100%; border-radius: 0; }
+        }
+
+        /* --- Desktop and Laptop Specific Layout (1024px and up) --- */
         @media (min-width: 1024px) {
-            main.game-layout { flex-direction: row; align-items: flex-start; gap: 2rem; }
-            .panel { width: 320px; flex-shrink: 0; }
-            .board-area { flex-grow: 1; }
-            #board { max-width: 80vh; }
-            #moveHistory { height: 50vh; min-height: 400px; }
+            .app-container {
+                display: grid;
+                grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 1fr);
+                grid-template-rows: auto 1fr;
+                gap: 1.5rem;
+                align-items: start;
+            }
+            header.app-header {
+                grid-column: 1 / -1;
+            }
+            .panel.left-panel {
+                grid-column: 1 / 2;
+                grid-row: 2 / 3;
+            }
+            .board-area {
+                grid-column: 2 / 3;
+                grid-row: 2 / 3;
+                max-width: 700px;
+                margin: 0 auto;
+            }
+            .panel.right-panel {
+                grid-column: 3 / 4;
+                grid-row: 2 / 3;
+            }
+            #board {
+                max-width: 700px;
+                width: 100%;
+            }
+            #moveHistory {
+                height: 50vh;
+                min-height: 400px;
+            }
         }
     </style>
 </head>
@@ -172,26 +221,24 @@
                 </div>
             </header>
     
-            <main class="game-layout">
-                <div class="panel left-panel">
-                    <h3>White's Captures</h3>
-                    <div class="captured-pieces-container" id="capturedByBlack"></div>
-                    <h3>Move History</h3>
-                    <div id="moveHistory"></div>
-                </div>
-    
-                <div class="board-area">
-                    <div id="board"></div>
-                    <h2 id="status">Create or join a room to play.</h2>
-                </div>
-                
-                <div class="panel right-panel">
-                    <h3>Black's Captures</h3>
-                    <div class="captured-pieces-container" id="capturedByWhite"></div>
-                    <h3>Game Info</h3>
-                    <div id="playerInfo">Your color: N/A</div>
-                </div>
+            <div class="panel left-panel">
+                <h3>White's Captures</h3>
+                <div class="captured-pieces-container" id="capturedByBlack"></div>
+                <h3>Move History</h3>
+                <div id="moveHistory"></div>
+            </div>
+
+            <main class="board-area">
+                <div id="board"></div>
+                <h2 id="status">Create or join a room to play.</h2>
             </main>
+            
+            <div class="panel right-panel">
+                <h3>Black's Captures</h3>
+                <div class="captured-pieces-container" id="capturedByWhite"></div>
+                <h3>Game Info</h3>
+                <div id="playerInfo">Your color: N/A</div>
+            </div>
         </div>
     </div>
     
