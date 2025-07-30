@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Online</title>
+    <title>Chess Online - Advanced</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -114,7 +114,33 @@
         }
         .panel h3 { margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid var(--panel-border-color); }
         .board-area { display: flex; flex-direction: column; align-items: center; gap: 1rem; flex-grow: 1; }
-        #board { width: 100%; max-width: 60vh; box-shadow: var(--shadow); border-radius: 4px; border: 8px solid var(--board-border-color); }
+        
+        /* Board Sizing and CSS */
+        #board {
+            width: 100%;
+            height: auto;
+            max-width: min(80vh, 80vw); /* Ensure board doesn't get too big */
+            box-shadow: var(--shadow);
+            border-radius: 4px;
+            border: 8px solid var(--board-border-color);
+            
+            /* Fix for pieces not showing/aligning correctly */
+            position: relative;
+        }
+        #board .square-55d63 {
+            position: relative;
+        }
+        #board .piece-417db {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 80%;
+            cursor: pointer;
+        }
 
         #moveHistory { height: 300px; overflow-y: auto; border-radius: 4px; padding: 0.5rem; font-family: var(--font-family-mono); font-size: 0.9rem; background-color: var(--history-bg-color); }
         .move-row { display: flex; padding: 0.3rem 0.2rem; border-radius: 3px; }
@@ -460,7 +486,7 @@
                     this.game = new Chess();
                     this.board = null;
                     this.state = {
-                        playerColor: null, currentRoom: null, premove: null,
+                        playerColor: null, currentRoom: null,
                         isMyTurn: false, isGameOver: false, pendingMove: false,
                         selectedSquare: null
                     };
@@ -494,6 +520,7 @@
                     if (this.state.isGameOver || !this.state.isMyTurn || this.state.pendingMove) {
                         return;
                     }
+                    const piece = this.game.get(square);
 
                     // If a square is already selected, try to move to the new square
                     if (this.state.selectedSquare) {
@@ -504,13 +531,10 @@
                         this.attemptMove(from, to);
                     } 
                     // Otherwise, select the clicked square if it contains one of the player's pieces
-                    else {
-                        const piece = this.game.get(square);
-                        if (piece && piece.color === this.state.playerColor) {
-                            this.state.selectedSquare = square;
-                            this.ui.clearAllHighlights();
-                            this.ui.highlightSquares('highlight-selected', square);
-                        }
+                    else if (piece && piece.color === this.state.playerColor) {
+                        this.state.selectedSquare = square;
+                        this.ui.clearAllHighlights();
+                        this.ui.highlightSquares('highlight-selected', square);
                     }
                 }
                 
@@ -520,7 +544,7 @@
                     if (move === null) {
                         this.ui.showMessage("Invalid move!", "error");
                         this.board.position(this.game.fen());
-                        return; // Invalid move, board will snap back.
+                        return;
                     }
                     this.state.pendingMove = true;
                     this.state.isMyTurn = false;
@@ -584,7 +608,7 @@
                     }
                 }
                 updateStatusText() {
-                    if (this.state.isGameOver) return; // Game over message is handled by overlay
+                    if (this.state.isGameOver) return;
                     let text;
                     const turn = this.game.turn() === 'w' ? 'White' : 'Black';
                     if (this.game.isCheckmate()) text = `Checkmate! ${turn === 'White' ? 'Black' : 'White'} wins.`;
