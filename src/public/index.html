@@ -169,6 +169,40 @@
             transition: background-color var(--transition-speed), color var(--transition-speed);
         }
 
+        /* --- Fullscreen Mode Styling --- */
+        body.fullscreen-mode {
+            overflow: hidden; /* Prevents scrolling */
+        }
+        body.fullscreen-mode .app-wrapper {
+            padding: 0;
+        }
+        body.fullscreen-mode header,
+        body.fullscreen-mode .panel.captured-pieces-panel,
+        body.fullscreen-mode .panel.move-history-panel {
+            display: none; /* Hide non-board elements */
+        }
+        body.fullscreen-mode .app-container {
+            display: flex; /* Make it a flexbox to center the board */
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Fill the viewport height */
+            background-color: var(--bg-color);
+            gap: 0;
+        }
+        body.fullscreen-mode .board-area {
+            position: fixed; /* Take board out of flow to center it */
+            inset: 0;
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+        }
+        body.fullscreen-mode #board {
+            max-width: 95vh;
+            max-height: 95vw;
+        }
+
         /* --- Main Layout --- */
         .app-wrapper {
             display: flex;
@@ -466,6 +500,7 @@
                                 <option value="forest">Forest</option>
                             </select>
                         </div>
+                        <button id="fullscreenBtn">Fullscreen</button>
                         <div class="status-indicators">
                             <div id="playerInfo">Your color: N/A</div>
                             <div id="connectionStatus">Connecting...</div>
@@ -531,7 +566,8 @@
                         createRoomBtn: $('#createRoomBtn'), joinRoomBtn: $('#joinRoomBtn'), roomCodeInput: $('#roomCodeInput'),
                         playerInfo: $('#playerInfo'), endGameOverlay: $('.game-end-overlay'), endGameMessage: $('#endGameMessage'),
                         messageContainer: $('#messageContainer'),
-                        themeSelect: $('#themeSelect')
+                        themeSelect: $('#themeSelect'),
+                        fullscreenBtn: $('#fullscreenBtn')
                     };
                     this.sounds = {
                         move: $('#moveSound')[0],
@@ -710,10 +746,31 @@
                             const roomCode = this.ui.elements.roomCodeInput.val().trim().toUpperCase();
                             if (roomCode) this.socket.emit('joinRoom', roomCode);
                         });
+
+                        // New fullscreen event listener
+                        this.ui.elements.fullscreenBtn.on('click', () => this.toggleFullscreen());
+                        $(document).on('keydown', (e) => {
+                            if (e.key === "Escape" && $('body').hasClass('fullscreen-mode')) {
+                                this.toggleFullscreen();
+                            }
+                        });
+
                     } catch (e) {
                         console.error("Initialization error:", e);
                         this.ui.showMessage("A critical error occurred on startup.", "error");
                     }
+                }
+                
+                toggleFullscreen() {
+                    $('body').toggleClass('fullscreen-mode');
+                    if ($('body').hasClass('fullscreen-mode')) {
+                        this.ui.elements.fullscreenBtn.text('Exit Fullscreen');
+                    } else {
+                        this.ui.elements.fullscreenBtn.text('Fullscreen');
+                    }
+                    setTimeout(() => {
+                        this.board.resize();
+                    }, 50);
                 }
 
                 // --- Board Interaction (Click-to-Move Logic) ---
