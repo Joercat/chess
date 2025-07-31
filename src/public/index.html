@@ -80,7 +80,6 @@
             padding: 2rem;
         }
         
-        /* The main grid container to match the drawing */
         .app-container {
             width: 100%;
             max-width: 1400px;
@@ -92,7 +91,7 @@
         }
         
         header.app-header {
-            grid-column: 1 / -1; /* Spans all columns */
+            grid-column: 1 / -1;
             padding: 1rem 1.5rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
@@ -139,7 +138,6 @@
             min-width: 180px;
         }
         
-        /* Three main columns below the header */
         .panel.captured-pieces-panel {
             grid-column: 1 / 2;
             grid-row: 2 / 3;
@@ -341,27 +339,61 @@
             color: var(--text-color);
             box-shadow: var(--shadow);
         }
-        /* Your mobile warning */
+        
+        /* Mobile Warning - Now dismissable */
+        #mobileWarning {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            inset: 0;
+            padding: 2rem;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            z-index: 9999;
+            text-align: center;
+        }
+
+        #mobileWarning p {
+            font-size: 20px;
+            color: var(--text-color);
+            margin-bottom: 20px;
+        }
+
+        #mobileWarning .dismiss-btn {
+            background-color: var(--button-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+        
+        #mobileWarning .dismiss-btn:hover {
+            background-color: var(--button-hover-color);
+        }
+
         @media (max-width: 1023px) {
             .app-wrapper {
                 display: none;
             }
             body {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                text-align: center;
+                display: block;
             }
-            body::before {
-                content: "This layout is designed for laptop screens only.";
-                font-size: 20px;
-                color: #f44336;
+            #mobileWarning {
+                display: flex;
             }
         }
     </style>
 </head>
 <body class="theme-light">
+    <div id="mobileWarning">
+        <p>This layout is designed for laptop screens only. The content will not be shown on this device.</p>
+        <button class="dismiss-btn">Dismiss</button>
+    </div>
 
     <div class="app-wrapper">
         <div class="app-container">
@@ -448,7 +480,9 @@
                         createRoomBtn: $('#createRoomBtn'), joinRoomBtn: $('#joinRoomBtn'), roomCodeInput: $('#roomCodeInput'),
                         playerInfo: $('#playerInfo'), endGameOverlay: $('.game-end-overlay'), endGameMessage: $('#endGameMessage'),
                         messageContainer: $('#messageContainer'),
-                        themeSelect: $('#themeSelect')
+                        themeSelect: $('#themeSelect'),
+                        mobileWarning: $('#mobileWarning'),
+                        dismissMobileWarningBtn: $('#mobileWarning .dismiss-btn')
                     };
                     this.sounds = {
                         move: $('#moveSound')[0],
@@ -459,6 +493,7 @@
 
                 bindUIEvents() {
                     this.elements.themeSelect.on('change', (e) => this.setTheme($(e.target).val()));
+                    this.elements.dismissMobileWarningBtn.on('click', () => this.elements.mobileWarning.hide());
                 }
                 
                 setTheme(theme) {
