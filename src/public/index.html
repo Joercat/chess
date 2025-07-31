@@ -71,7 +71,7 @@
             transition: background-color var(--transition-speed), color var(--transition-speed);
         }
 
-        /* --- Main Layout based on user drawing --- */
+        /* --- Main Layout based on your new HTML and drawing --- */
         .app-wrapper {
             display: flex;
             justify-content: center;
@@ -79,25 +79,27 @@
             min-height: 100vh;
             padding: 2rem;
         }
-
+        
+        /* The main grid container to match the drawing */
         .app-container {
             width: 100%;
             max-width: 1400px;
             display: grid;
-            grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 1fr);
+            grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr) auto;
             grid-template-rows: auto 1fr;
             gap: 2rem;
             align-items: start;
         }
-
+        
         header.app-header {
-            grid-column: 1 / -1;
+            grid-column: 1 / -1; /* Spans all columns */
             padding: 1rem 1.5rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             background-color: var(--panel-bg-color);
             border: 1px solid var(--panel-border-color);
             transition: background-color var(--transition-speed), border-color var(--transition-speed);
+            margin-bottom: 2rem;
         }
 
         .header-content {
@@ -136,22 +138,38 @@
             text-align: right;
             min-width: 180px;
         }
-
-        .left-panels-container {
+        
+        /* Three main columns below the header */
+        .panel.captured-pieces-panel {
             grid-column: 1 / 2;
+            grid-row: 2 / 3;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel.move-history-panel {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .board-area {
+            grid-column: 3 / 4;
             grid-row: 2 / 3;
             display: flex;
             flex-direction: column;
-            gap: 2rem;
+            align-items: center;
+            gap: 1rem;
         }
-        
+
         .panel {
             padding: 1.5rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             background-color: var(--panel-bg-color);
             border: 1px solid var(--panel-border-color);
-            min-width: 280px;
+            min-width: 200px;
             transition: background-color var(--transition-speed), border-color var(--transition-speed);
         }
 
@@ -159,30 +177,6 @@
             margin: 0 0 1rem 0;
             padding-bottom: 0.5rem;
             border-bottom: 2px solid var(--panel-border-color);
-        }
-
-        .captured-pieces-panel {
-            grid-column: 1 / 2;
-            grid-row: 2 / 3;
-            height: fit-content;
-        }
-
-        .move-history-panel {
-            grid-column: 1 / 2;
-            grid-row: 2 / 3;
-            height: fit-content;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .board-area {
-            grid-column: 2 / 3;
-            grid-row: 2 / 3;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
         }
         
         /* --- Board and Pieces --- */
@@ -240,22 +234,23 @@
             padding: 0 0.5em;
         }
 
+        .captured-pieces-panel h3:first-of-type {
+            margin-bottom: 1rem;
+        }
+
+        .captured-pieces-panel h3:last-of-type {
+            margin-top: 1.5rem;
+        }
+        
         .captured-pieces-container {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
-            margin-bottom: 1rem;
         }
         
         .captured-pieces-container img {
             width: 32px;
             height: 32px;
-        }
-
-        .captured-pieces-row {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
         }
         
         button {
@@ -346,6 +341,24 @@
             color: var(--text-color);
             box-shadow: var(--shadow);
         }
+        /* Your mobile warning */
+        @media (max-width: 1023px) {
+            .app-wrapper {
+                display: none;
+            }
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                text-align: center;
+            }
+            body::before {
+                content: "This layout is designed for laptop screens only.";
+                font-size: 20px;
+                color: #f44336;
+            }
+        }
     </style>
 </head>
 <body class="theme-light">
@@ -371,6 +384,7 @@
                             </select>
                         </div>
                         <div class="status-indicators">
+                            <div id="playerInfo">Your color: N/A</div>
                             <div id="connectionStatus">Connecting...</div>
                             <div id="roomStatus">No room joined.</div>
                         </div>
@@ -378,29 +392,23 @@
                 </div>
             </header>
     
-            <div class="left-panels-container">
-                <div class="panel captured-pieces-panel">
-                    <h3>Captured Pieces</h3>
-                    <div class="captured-pieces-row">
-                        <div id="capturedByWhite"></div>
-                        <div id="capturedByBlack"></div>
-                    </div>
-                </div>
-                <div class="panel move-history-panel">
-                    <h3>Move History</h3>
-                    <div id="moveHistory"></div>
-                </div>
+            <div class="panel captured-pieces-panel">
+                <h3>White's Captures</h3>
+                <div id="capturedByBlack"></div>
+                <h3>Black's Captures</h3>
+                <div id="capturedByWhite"></div>
+            </div>
+            
+            <div class="panel move-history-panel">
+                <h3>Move History</h3>
+                <div id="moveHistory"></div>
             </div>
 
             <main class="board-area">
                 <div id="board"></div>
                 <h2 id="status">Create or join a room to play.</h2>
             </main>
-            
-            <div class="panel right-panel">
-                <h3>Game Info</h3>
-                <div id="playerInfo">Your color: N/A</div>
-            </div>
+
         </div>
     </div>
     
