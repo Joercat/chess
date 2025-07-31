@@ -18,17 +18,45 @@
             --shadow: 0 4px 15px rgba(0,0,0,0.1);
             --transition-speed: 0.2s;
             
-            /* Color Palette for a Clean, Professional Look */
-            --bg-color: #f8f9fa; /* Off-white background */
-            --text-color: #343a40; /* Dark gray text */
-            --panel-bg-color: #ffffff; /* White panels */
-            --panel-border-color: #e9ecef; /* Light gray border */
-            --board-border-color: #6c757d; /* Muted board border */
-            --history-bg-color: #f1f3f5; /* Slightly darker history background */
+            /* Default (Light) Theme */
+            --bg-color: #f8f9fa;
+            --text-color: #343a40;
+            --panel-bg-color: #ffffff;
+            --panel-border-color: #e9ecef;
+            --board-border-color: #6c757d;
+            --history-bg-color: #f1f3f5;
             --input-bg-color: #ffffff;
             --input-text-color: #343a40;
-            --button-color: #007bff; /* Primary blue */
+            --button-color: #007bff;
             --button-hover-color: #0056b3;
+        }
+
+        /* Dark Theme */
+        body.theme-dark {
+            --bg-color: #18191a;
+            --text-color: #e4e6eb;
+            --panel-bg-color: #242526;
+            --panel-border-color: #3a3b3c;
+            --board-border-color: #4d4d4d;
+            --history-bg-color: #3a3b3c;
+            --input-bg-color: #3a3b3c;
+            --input-text-color: #e4e6eb;
+            --button-color: #0b84fe;
+            --button-hover-color: #0a78e7;
+        }
+
+        /* Blue Theme */
+        body.theme-blue {
+            --bg-color: #1a237e;
+            --text-color: #e8eaf6;
+            --panel-bg-color: #283593;
+            --panel-border-color: #3f51b5;
+            --board-border-color: #3f51b5;
+            --history-bg-color: #3f51b5;
+            --input-bg-color: #3f51b5;
+            --input-text-color: #e8eaf6;
+            --button-color: #e91e63;
+            --button-hover-color: #c2185b;
         }
 
         *, *::before, *::after {
@@ -40,6 +68,7 @@
             margin: 0;
             background-color: var(--bg-color);
             color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
         }
 
         /* --- Main Layout for Laptops (Desktop-First) --- */
@@ -55,7 +84,7 @@
             width: 100%;
             max-width: 1400px;
             display: grid;
-            grid-template-columns: 1fr auto 1fr;
+            grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 1fr);
             grid-template-rows: auto 1fr;
             gap: 2rem;
             align-items: start;
@@ -68,6 +97,7 @@
             box-shadow: var(--shadow);
             background-color: var(--panel-bg-color);
             border: 1px solid var(--panel-border-color);
+            transition: background-color var(--transition-speed), border-color var(--transition-speed);
         }
 
         .header-content {
@@ -81,6 +111,11 @@
         .header-title h1 {
             margin: 0;
             font-size: 1.75rem;
+        }
+        .theme-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .room-controls {
@@ -103,6 +138,7 @@
             background-color: var(--panel-bg-color);
             border: 1px solid var(--panel-border-color);
             min-width: 280px;
+            transition: background-color var(--transition-speed), border-color var(--transition-speed);
         }
 
         .panel h3 {
@@ -114,6 +150,7 @@
         .panel.left-panel {
             grid-column: 1 / 2;
             grid-row: 2 / 3;
+            height: 100%;
         }
 
         .board-area {
@@ -128,17 +165,18 @@
         .panel.right-panel {
             grid-column: 3 / 4;
             grid-row: 2 / 3;
+            height: 100%;
         }
         
         /* --- Board and Pieces --- */
         #board {
             width: 100%;
             height: auto;
-            max-width: 70vh;
-            max-height: 70vh;
+            max-width: min(80vh, 80vw);
             box-shadow: var(--shadow);
             border-radius: 4px;
             border: 8px solid var(--board-border-color);
+            transition: border-color var(--transition-speed);
         }
         
         /* Override default chessboardjs styles for better visual consistency */
@@ -163,6 +201,7 @@
             font-family: var(--font-family-mono);
             font-size: 1rem;
             background-color: var(--history-bg-color);
+            transition: background-color var(--transition-speed);
         }
         
         .move-row {
@@ -222,7 +261,7 @@
             cursor: not-allowed;
         }
 
-        input {
+        input, select {
             padding: 0.75rem;
             font-size: 1rem;
             border: 1px solid var(--panel-border-color);
@@ -232,6 +271,7 @@
             text-transform: uppercase;
             background-color: var(--input-bg-color);
             color: var(--input-text-color);
+            transition: background-color var(--transition-speed), border-color var(--transition-speed), color var(--transition-speed);
         }
 
         /* --- Highlights and Overlays --- */
@@ -290,7 +330,7 @@
         }
     </style>
 </head>
-<body>
+<body class="theme-light">
 
     <div class="app-wrapper">
         <div class="app-container">
@@ -304,6 +344,14 @@
                         <button id="joinRoomBtn">Join Room</button>
                     </div>
                     <div class="status-indicators">
+                        <div class="theme-switcher">
+                            <label for="themeSelect">Theme:</label>
+                            <select id="themeSelect">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="blue">Blue</option>
+                            </select>
+                        </div>
                         <div id="connectionStatus">Connecting...</div>
                         <div id="roomStatus">No room joined.</div>
                     </div>
@@ -366,12 +414,22 @@
                         moveHistory: $('#moveHistory'), capturedByWhite: $('#capturedByWhite'), capturedByBlack: $('#capturedByBlack'),
                         createRoomBtn: $('#createRoomBtn'), joinRoomBtn: $('#joinRoomBtn'), roomCodeInput: $('#roomCodeInput'),
                         playerInfo: $('#playerInfo'), endGameOverlay: $('.game-end-overlay'), endGameMessage: $('#endGameMessage'),
-                        messageContainer: $('#messageContainer')
+                        messageContainer: $('#messageContainer'),
+                        themeSelect: $('#themeSelect')
                     };
                     this.sounds = {
                         move: $('#moveSound')[0],
                         capture: $('#captureSound')[0],
                     };
+                    this.bindUIEvents();
+                }
+
+                bindUIEvents() {
+                    this.elements.themeSelect.on('change', (e) => this.setTheme($(e.target).val()));
+                }
+                
+                setTheme(theme) {
+                    $('body').removeClass().addClass(`theme-${theme}`);
                 }
                 
                 /**
