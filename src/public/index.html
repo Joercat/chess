@@ -18,7 +18,7 @@
             --shadow: 0 4px 15px rgba(0,0,0,0.1);
             --transition-speed: 0.2s;
             
-            /* Default (Light) Theme - Matches image */
+            /* Default (Light) Theme */
             --bg-color: #e8e9ea;
             --text-color: #343a40;
             --panel-bg-color: #fcfcfc;
@@ -71,7 +71,7 @@
             transition: background-color var(--transition-speed), color var(--transition-speed);
         }
 
-        /* --- Main Layout for Laptops (Desktop-First) --- */
+        /* --- Main Layout based on user drawing --- */
         .app-wrapper {
             display: flex;
             justify-content: center;
@@ -89,10 +89,10 @@
             gap: 2rem;
             align-items: start;
         }
-        
+
         header.app-header {
             grid-column: 1 / -1;
-            padding: 1.5rem;
+            padding: 1rem 1.5rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             background-color: var(--panel-bg-color);
@@ -104,10 +104,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
             flex-wrap: wrap;
         }
 
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
         .header-title h1 {
             margin: 0;
             font-size: 1.75rem;
@@ -131,6 +137,14 @@
             min-width: 180px;
         }
 
+        .left-panels-container {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
         .panel {
             padding: 1.5rem;
             border-radius: var(--border-radius);
@@ -139,9 +153,6 @@
             border: 1px solid var(--panel-border-color);
             min-width: 280px;
             transition: background-color var(--transition-speed), border-color var(--transition-speed);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
         }
 
         .panel h3 {
@@ -150,9 +161,19 @@
             border-bottom: 2px solid var(--panel-border-color);
         }
 
-        .panel.left-panel {
+        .captured-pieces-panel {
             grid-column: 1 / 2;
             grid-row: 2 / 3;
+            height: fit-content;
+        }
+
+        .move-history-panel {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+            height: fit-content;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .board-area {
@@ -162,11 +183,6 @@
             flex-direction: column;
             align-items: center;
             gap: 1rem;
-        }
-
-        .panel.right-panel {
-            grid-column: 3 / 4;
-            grid-row: 2 / 3;
         }
         
         /* --- Board and Pieces --- */
@@ -180,7 +196,6 @@
             transition: border-color var(--transition-speed);
         }
         
-        /* Override default chessboardjs styles for better visual consistency */
         .chessboard-b72b1 .square-55d63 {
             border-radius: 2px;
         }
@@ -195,8 +210,6 @@
         /* --- UI Elements --- */
         #moveHistory {
             flex-grow: 1;
-            height: 50vh;
-            min-height: 400px;
             overflow-y: auto;
             border-radius: 4px;
             padding: 0.5rem;
@@ -228,21 +241,23 @@
         }
 
         .captured-pieces-container {
-            min-height: 40px;
-            margin-bottom: 1rem;
-        }
-
-        .captured-pieces {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
+            margin-bottom: 1rem;
         }
         
-        .captured-pieces img {
+        .captured-pieces-container img {
             width: 32px;
             height: 32px;
         }
 
+        .captured-pieces-row {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
         button {
             padding: 0.75rem 1.5rem;
             font-size: 1rem;
@@ -339,14 +354,14 @@
         <div class="app-container">
             <header class="app-header">
                 <div class="header-content">
-                    <div class="header-title"><h1>Chess Online</h1></div>
-                    <div class="room-controls">
-                        <button id="createRoomBtn">Create Room</button>
-                        <span>or</span>
-                        <input type="text" id="roomCodeInput" placeholder="Enter Room Code" maxlength="6">
-                        <button id="joinRoomBtn">Join Room</button>
+                    <div class="header-left">
+                        <div class="room-controls">
+                            <button id="createRoomBtn">Create Room</button>
+                            <input type="text" id="roomCodeInput" placeholder="Enter Room Code" maxlength="6">
+                            <button id="joinRoomBtn">Join Room</button>
+                        </div>
                     </div>
-                    <div class="status-indicators">
+                    <div class="header-right">
                         <div class="theme-switcher">
                             <label for="themeSelect">Theme:</label>
                             <select id="themeSelect">
@@ -355,17 +370,26 @@
                                 <option value="blue">Blue</option>
                             </select>
                         </div>
-                        <div id="connectionStatus">Connecting...</div>
-                        <div id="roomStatus">No room joined.</div>
+                        <div class="status-indicators">
+                            <div id="connectionStatus">Connecting...</div>
+                            <div id="roomStatus">No room joined.</div>
+                        </div>
                     </div>
                 </div>
             </header>
     
-            <div class="panel left-panel">
-                <h3>White's Captures</h3>
-                <div class="captured-pieces-container" id="capturedByBlack"></div>
-                <h3>Move History</h3>
-                <div id="moveHistory"></div>
+            <div class="left-panels-container">
+                <div class="panel captured-pieces-panel">
+                    <h3>Captured Pieces</h3>
+                    <div class="captured-pieces-row">
+                        <div id="capturedByWhite"></div>
+                        <div id="capturedByBlack"></div>
+                    </div>
+                </div>
+                <div class="panel move-history-panel">
+                    <h3>Move History</h3>
+                    <div id="moveHistory"></div>
+                </div>
             </div>
 
             <main class="board-area">
@@ -374,8 +398,6 @@
             </main>
             
             <div class="panel right-panel">
-                <h3>Black's Captures</h3>
-                <div class="captured-pieces-container" id="capturedByWhite"></div>
                 <h3>Game Info</h3>
                 <div id="playerInfo">Your color: N/A</div>
             </div>
@@ -505,8 +527,8 @@
                     const url = piece => `https://chessboardjs.com/img/chesspieces/wikipedia/${piece}.png`;
                     const capturedByWhiteHtml = captured.w.map(p => `<img src="${url(p)}" alt="${p}">`).join('');
                     const capturedByBlackHtml = captured.b.map(p => `<img src="${url(p)}" alt="${p}">`).join('');
-                    this.elements.capturedByWhite.html(`<div class="captured-pieces">${capturedByWhiteHtml}</div>`);
-                    this.elements.capturedByBlack.html(`<div class="captured-pieces">${capturedByBlackHtml}</div>`);
+                    this.elements.capturedByWhite.html(`<div class="captured-pieces-container">${capturedByWhiteHtml}</div>`);
+                    this.elements.capturedByBlack.html(`<div class="captured-pieces-container">${capturedByBlackHtml}</div>`);
                 }
 
                 /** Clears all highlights from the board. */
