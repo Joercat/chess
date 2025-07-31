@@ -59,6 +59,34 @@
             --button-hover-color: #c2185b;
         }
 
+        /* Green Theme */
+        body.theme-green {
+            --bg-color: #1d401d;
+            --text-color: #d1e2d1;
+            --panel-bg-color: #2e592e;
+            --panel-border-color: #558b2f;
+            --board-border-color: #689f38;
+            --history-bg-color: #426e42;
+            --input-bg-color: #426e42;
+            --input-text-color: #d1e2d1;
+            --button-color: #ffb74d;
+            --button-hover-color: #ffa000;
+        }
+
+        /* Sepia Theme */
+        body.theme-sepia {
+            --bg-color: #f4f1e9;
+            --text-color: #5b4636;
+            --panel-bg-color: #fcf8f0;
+            --panel-border-color: #e0d8c8;
+            --board-border-color: #8c7b64;
+            --history-bg-color: #e8e5df;
+            --input-bg-color: #fcf8f0;
+            --input-text-color: #5b4636;
+            --button-color: #8b5e3c;
+            --button-hover-color: #6f4c33;
+        }
+
         *, *::before, *::after {
             box-sizing: border-box;
         }
@@ -84,14 +112,11 @@
             width: 100%;
             max-width: 1400px;
             display: grid;
-            /* Updated grid columns:
-               - Column 1 (Captured Pieces): min 200px, 1 part of remaining space
-               - Column 2 (Move History): min 150px, 0.5 parts of remaining space (thinner)
-               - Column 3 (Board): min 600px, 3 parts of remaining space (much bigger) */
             grid-template-columns: minmax(200px, 1fr) minmax(150px, 0.5fr) minmax(600px, 3fr);
             grid-template-rows: auto 1fr;
             gap: 2rem;
-            align-items: start;
+            /* Stretches the row content to match the height of the tallest item */
+            align-items: stretch; 
         }
         
         header.app-header {
@@ -162,6 +187,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center; /* Center the board vertically */
             gap: 1rem;
         }
 
@@ -184,7 +210,7 @@
         #board {
             width: 100%;
             height: auto;
-            max-width: min(85vh, 85vw);
+            /* Removed max-width to allow the board to grow larger */
             box-shadow: var(--shadow);
             border-radius: 4px;
             border: 8px solid var(--board-border-color);
@@ -363,6 +389,8 @@
                                 <option value="light">Light</option>
                                 <option value="dark">Dark</option>
                                 <option value="blue">Blue</option>
+                                <option value="green">Green</option>
+                                <option value="sepia">Sepia</option>
                             </select>
                         </div>
                         <div class="status-indicators">
