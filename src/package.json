@@ -1,15 +1,25 @@
 {
-  "name": "chess-online",
+  "name": "online-chess-game",
   "version": "1.0.0",
-  "description": "A fully featured online chess game in two files",
+  "description": "A real-time, online chess application built with Node.js, Express, Socket.io, and Chess.js.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "chess.js": "^0.10.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "pino": "^9.3.1",
+    "pino-http": "^10.2.0",
     "socket.io": "^4.7.5",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
   }
 }
