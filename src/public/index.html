@@ -71,7 +71,7 @@
             transition: background-color var(--transition-speed), color var(--transition-speed);
         }
 
-        /* --- Main Layout based on your new HTML and drawing --- */
+        /* --- Main Layout --- */
         .app-wrapper {
             display: flex;
             justify-content: center;
@@ -84,7 +84,11 @@
             width: 100%;
             max-width: 1400px;
             display: grid;
-            grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr) auto;
+            /* Updated grid columns:
+               - Column 1 (Captured Pieces): min 200px, 1 part of remaining space
+               - Column 2 (Move History): min 150px, 0.5 parts of remaining space (thinner)
+               - Column 3 (Board): min 600px, 3 parts of remaining space (much bigger) */
+            grid-template-columns: minmax(200px, 1fr) minmax(150px, 0.5fr) minmax(600px, 3fr);
             grid-template-rows: auto 1fr;
             gap: 2rem;
             align-items: start;
@@ -167,7 +171,6 @@
             box-shadow: var(--shadow);
             background-color: var(--panel-bg-color);
             border: 1px solid var(--panel-border-color);
-            min-width: 200px;
             transition: background-color var(--transition-speed), border-color var(--transition-speed);
         }
 
