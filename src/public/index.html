@@ -3,30 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Online - Advanced</title>
+    <title>Chess Online</title>
+    <link rel="icon" type="image/png" href="https://joercat.github.io/chess/king.png">
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* --- General and Root Styling --- */
         :root {
             --font-family-main: 'Roboto', sans-serif;
             --font-family-mono: 'Space Mono', monospace;
             --border-radius: 8px;
             --shadow: 0 4px 15px rgba(0,0,0,0.1);
-            --transition-speed: 0.4s;
+            --transition-speed: 0.2s;
             
-            /* Theme Variables */
-            --bg-color: #f0f2f5;
-            --text-color: #1c1e21;
-            --panel-bg-color: #ffffff;
-            --panel-border-color: #ddd;
-            --board-border-color: #dcdcdc;
-            --history-bg-color: #f7f7f7;
-            --input-bg-color: #fff;
-            --input-text-color: #000;
-            --button-color: #2196F3;
-            --button-hover-color: #1976D2;
+            /* Color Palette for a Clean, Professional Look */
+            --bg-color: #f8f9fa; /* Off-white background */
+            --text-color: #343a40; /* Dark gray text */
+            --panel-bg-color: #ffffff; /* White panels */
+            --panel-border-color: #e9ecef; /* Light gray border */
+            --board-border-color: #6c757d; /* Muted board border */
+            --history-bg-color: #f1f3f5; /* Slightly darker history background */
+            --input-bg-color: #ffffff;
+            --input-text-color: #343a40;
+            --button-color: #007bff; /* Primary blue */
+            --button-hover-color: #0056b3;
         }
 
         *, *::before, *::after {
@@ -38,190 +40,279 @@
             margin: 0;
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: background-color var(--transition-speed), color var(--transition-speed);
         }
 
+        /* --- Main Layout for Laptops (Desktop-First) --- */
         .app-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 1rem;
-            overflow-x: hidden;
+            padding: 2rem;
         }
 
         .app-container {
             width: 100%;
             max-width: 1400px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 2rem;
+            align-items: start;
         }
-
-        /* --- THEMES --- */
-        body.theme-dark {
-            --bg-color: #18191a; --text-color: #e4e6eb; --panel-bg-color: #242526;
-            --panel-border-color: #3a3b3c; --board-border-color: #4d4d4d;
-            --history-bg-color: #3a3b3c; --input-bg-color: #3a3b3c; --input-text-color: #e4e6eb;
-            --button-color: #0b84fe; --button-hover-color: #0a78e7;
-        }
-        body.theme-blue {
-            --bg-color: #1a237e; --text-color: #e8eaf6; --panel-bg-color: #283593;
-            --panel-border-color: #3f51b5; --board-border-color: #3f51b5;
-            --history-bg-color: #3f51b5;
-            --button-color: #e91e63; --button-hover-color: #c2185b;
-        }
-        body.theme-green {
-            --bg-color: #2e7d32; --text-color: #e8f5e9; --panel-bg-color: #388e3c;
-            --panel-border-color: #4caf50; --board-border-color: #4caf50;
-            --history-bg-color: #66bb6a;
-            --button-color: #ff9800; --button-hover-color: #fb8c00;
-        }
-        body.theme-wood {
-            --bg-color: #8d6e63; --text-color: #ffffff;
-            --panel-bg-color: rgba(93, 64, 55, 0.85); --panel-border-color: #a1887f;
-            --board-border-color: #5d4037;
-            background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
-            --button-color: #4e342e; --button-hover-color: #3e2723;
-        }
-        body.theme-wood .panel, body.theme-wood header { backdrop-filter: blur(5px); }
-
-        /* --- Layout Components --- */
+        
         header.app-header {
-            padding: 1rem 1.5rem;
+            grid-column: 1 / -1;
+            padding: 1.5rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             background-color: var(--panel-bg-color);
             border: 1px solid var(--panel-border-color);
         }
-        .header-content { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
-        .header-title h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 1.75rem); }
-        .room-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; align-items: center; }
-        .status-indicators { font-weight: 500; font-size: 0.9em; text-align: right; }
 
-        main.game-layout {
+        .header-content {
             display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
         }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 1.75rem;
+        }
+
+        .room-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-indicators {
+            font-weight: 500;
+            font-size: 0.9em;
+            text-align: right;
+        }
+
         .panel {
             padding: 1.5rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             background-color: var(--panel-bg-color);
             border: 1px solid var(--panel-border-color);
-            transition: background-color var(--transition-speed), border-color var(--transition-speed);
+            min-width: 280px;
         }
-        .panel h3 { margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid var(--panel-border-color); }
+
+        .panel h3 {
+            margin: 0 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--panel-border-color);
+        }
+
+        .panel.left-panel {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+
         .board-area {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 1rem;
-            flex-grow: 1;
+        }
+
+        .panel.right-panel {
+            grid-column: 3 / 4;
+            grid-row: 2 / 3;
         }
         
-        /* Board Sizing and CSS */
+        /* --- Board and Pieces --- */
         #board {
             width: 100%;
             height: auto;
-            max-width: min(80vh, 80vw); /* Responsive sizing for both mobile and desktop */
+            max-width: 70vh; /* Ensures the board remains a reasonable size on large screens */
+            max-height: 70vh;
             box-shadow: var(--shadow);
             border-radius: 4px;
             border: 8px solid var(--board-border-color);
         }
-
-        /* THIS IS THE CRITICAL FIX FOR PIECES NOT SHOWING */
-        .chessboard-b72b1 .piece-417db {
-            z-index: 100 !important;
+        
+        /* Override default chessboardjs styles for better visual consistency */
+        .chessboard-b72b1 .square-55d63 {
+            border-radius: 2px;
         }
 
-        #moveHistory { height: 300px; overflow-y: auto; border-radius: 4px; padding: 0.5rem; font-family: var(--font-family-mono); font-size: 0.9rem; background-color: var(--history-bg-color); }
-        .move-row { display: flex; padding: 0.3rem 0.2rem; border-radius: 3px; }
-        .move-row:nth-child(odd) { background-color: rgba(0,0,0,0.05); }
-        .move-number { width: 2.5em; color: #888; font-weight: bold; }
-        .move { flex: 1; padding: 0 0.5em; }
+        #status {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text-color);
+            text-align: center;
+        }
 
-        .captured-pieces-container { min-height: 40px; }
-        .captured-pieces { display: flex; flex-wrap: wrap; gap: 5px; }
-        .captured-pieces img { width: 32px; height: 32px; transition: transform 0.2s; }
-        .captured-pieces img:hover { transform: scale(1.1); }
-
-        /* --- UI Elements & Highlights --- */
-        .highlight-last-move { background-color: rgba(155, 199, 0, 0.45) !important; }
-        .highlight-selected { background-color: rgba(255, 255, 0, 0.4) !important; }
-        .highlight-check { box-shadow: inset 0 0 15px 5px rgba(255,0,0,0.6) !important; }
-        button { padding: 0.75rem 1.5rem; font-size: 1rem; border: none; border-radius: var(--border-radius); background: var(--button-color); color: white; cursor: pointer; transition: all 0.2s; font-weight: 500; }
-        button:hover:not(:disabled) { background: var(--button-hover-color); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        input { padding: 0.75rem; font-size: 1rem; border: 1px solid var(--panel-border-color); border-radius: var(--border-radius); text-align: center; width: 180px; text-transform: uppercase; background-color: var(--input-bg-color); color: var(--input-text-color); }
+        /* --- UI Elements --- */
+        #moveHistory {
+            height: 50vh;
+            min-height: 400px;
+            overflow-y: auto;
+            border-radius: 4px;
+            padding: 0.5rem;
+            font-family: var(--font-family-mono);
+            font-size: 0.9rem;
+            background-color: var(--history-bg-color);
+        }
         
-        /* --- Overlays & Popups --- */
-        .theme-switcher { position: fixed; top: 1rem; right: 1rem; z-index: 1000; }
-        #messageContainer { position: fixed; top: 6rem; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; align-items: center;}
-        .message { padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); font-weight: 500; opacity: 0; transition: all 0.5s; transform: translateY(-20px); }
-        .message.show { opacity: 1; transform: translateY(0); }
+        .move-row {
+            display: flex;
+            padding: 0.3rem 0.2rem;
+            border-radius: 3px;
+        }
+        
+        .move-row:nth-child(odd) {
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .move-number {
+            width: 2.5em;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .move {
+            flex: 1;
+            padding: 0 0.5em;
+        }
+
+        .captured-pieces-container {
+            min-height: 40px;
+        }
+
+        .captured-pieces {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .captured-pieces img {
+            width: 32px;
+            height: 32px;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background: var(--button-color);
+            color: white;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            font-weight: 500;
+        }
+        
+        button:hover:not(:disabled) {
+            background: var(--button-hover-color);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        input {
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid var(--panel-border-color);
+            border-radius: var(--border-radius);
+            text-align: center;
+            width: 180px;
+            text-transform: uppercase;
+            background-color: var(--input-bg-color);
+            color: var(--input-text-color);
+        }
+
+        /* --- Highlights and Overlays --- */
+        .highlight-last-move { background-color: rgba(155, 199, 0, 0.45); }
+        .highlight-selected { background-color: rgba(255, 255, 0, 0.4); }
+        .highlight-check { box-shadow: inset 0 0 15px 5px rgba(255,0,0,0.6); }
+
+        #messageContainer {
+            position: fixed;
+            top: 6rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            font-weight: 500;
+            opacity: 0;
+            transition: all var(--transition-speed);
+            transform: translateY(-20px);
+        }
+        
+        .message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
         .message-success { background: #4caf50; color: white; }
         .message-error { background: #f44336; color: white; }
         .message-info { background: #2196F3; color: white; }
-        #errorLogContainer { position: fixed; bottom: 1rem; right: 1rem; z-index: 1001; }
-        #errorLog { display: none; width: 350px; max-height: 200px; background: rgba(0,0,0,0.85); color: #fff; border-radius: var(--border-radius); padding: 1rem; font-family: var(--font-family-mono); font-size: 0.75rem; overflow-y: auto; margin-bottom: 0.5rem; }
-        .game-end-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 999; justify-content: center; align-items: center; }
-        .game-end-message { background: var(--panel-bg-color); padding: 2.5rem; border-radius: 10px; text-align: center; color: var(--text-color); }
         
-        /* --- Responsive Layout for All Devices --- */
-        @media (max-width: 1023px) {
-            .app-wrapper { padding: 0.5rem; }
-            .header-content { flex-direction: column; align-items: center; text-align: center; }
-            .status-indicators { text-align: center; }
-            .room-controls { flex-direction: column; width: 100%; }
-            .room-controls input, .room-controls button { width: 100%; }
-            .game-layout { gap: 1rem; }
-            .panel { padding: 1rem; }
-            .panel h3 { font-size: 1.1rem; }
-            #moveHistory { height: 200px; }
-            #errorLogContainer { width: 100%; right: auto; left: 0; bottom: 0; }
-            #errorLog { width: 100%; border-radius: 0; }
+        .game-end-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .game-end-message {
+            background: var(--panel-bg-color);
+            padding: 2.5rem;
+            border-radius: 10px;
+            text-align: center;
+            color: var(--text-color);
+            box-shadow: var(--shadow);
         }
 
-        /* --- Desktop and Laptop Specific Layout (1024px and up) --- */
-        @media (min-width: 1024px) {
+        /* --- Small Screen/Mobile Layout (fallback) --- */
+        @media (max-width: 1023px) {
             .app-container {
-                display: grid;
-                grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 1fr);
-                grid-template-rows: auto 1fr;
+                display: flex;
+                flex-direction: column;
                 gap: 1.5rem;
-                align-items: start;
             }
-            header.app-header {
-                grid-column: 1 / -1;
+            .header-content {
+                flex-direction: column;
+                text-align: center;
             }
-            .panel.left-panel {
-                grid-column: 1 / 2;
-                grid-row: 2 / 3;
-            }
-            .board-area {
-                grid-column: 2 / 3;
-                grid-row: 2 / 3;
-                max-width: 700px;
-                margin: 0 auto;
-            }
-            .panel.right-panel {
-                grid-column: 3 / 4;
-                grid-row: 2 / 3;
-            }
-            #board {
-                max-width: 700px;
+            .room-controls {
+                flex-direction: column;
                 width: 100%;
             }
-            #moveHistory {
-                height: 50vh;
-                min-height: 400px;
+            .room-controls input,
+            .room-controls button {
+                width: 100%;
+            }
+            .panel {
+                min-width: unset;
             }
         }
     </style>
 </head>
-<body class="theme-light">
+<body>
 
     <div class="app-wrapper">
         <div class="app-container">
@@ -249,7 +340,7 @@
             </div>
 
             <main class="board-area">
-                <div id="board" class="chessboard-b72b1"></div>
+                <div id="board"></div>
                 <h2 id="status">Create or join a room to play.</h2>
             </main>
             
@@ -263,15 +354,6 @@
     </div>
     
     <div id="messageContainer"></div>
-    <div class="theme-switcher">
-        <select id="themeSelect">
-            <option value="light">Light</option> <option value="dark">Dark</option> <option value="blue">Blue</option> <option value="green">Green</option> <option value="wood">Wood</option>
-        </select>
-    </div>
-    <div id="errorLogContainer">
-        <div id="errorLog"></div>
-        <button id="toggleErrorLogBtn">Toggle Errors</button>
-    </div>
     <div class="game-end-overlay">
         <div class="game-end-message">
             <h2 id="endGameMessage"></h2>
@@ -306,26 +388,12 @@
                         moveHistory: $('#moveHistory'), capturedByWhite: $('#capturedByWhite'), capturedByBlack: $('#capturedByBlack'),
                         createRoomBtn: $('#createRoomBtn'), joinRoomBtn: $('#joinRoomBtn'), roomCodeInput: $('#roomCodeInput'),
                         playerInfo: $('#playerInfo'), endGameOverlay: $('.game-end-overlay'), endGameMessage: $('#endGameMessage'),
-                        messageContainer: $('#messageContainer'), errorLog: $('#errorLog'), toggleErrorLogBtn: $('#toggleErrorLogBtn'),
-                        themeSelect: $('#themeSelect'), board: $('#board')
+                        messageContainer: $('#messageContainer')
                     };
                     this.sounds = {
                         move: $('#moveSound')[0],
                         capture: $('#captureSound')[0],
                     };
-                    this.errors = [];
-                    this.bindUIEvents();
-                }
-
-                /** Binds general UI events like theme switching and error log toggling. */
-                bindUIEvents() {
-                    this.elements.themeSelect.on('change', (e) => this.setTheme($(e.target).val()));
-                    this.elements.toggleErrorLogBtn.on('click', () => this.elements.errorLog.toggle());
-                }
-
-                /** Sets the color theme for the page. */
-                setTheme(theme) {
-                    $('body').removeClass().addClass(`theme-${theme}`);
                 }
                 
                 /**
@@ -341,19 +409,6 @@
                         msg.removeClass('show');
                         setTimeout(() => msg.remove(), 500);
                     }, 4000);
-                }
-
-                /**
-                 * Logs an error to the console and the on-screen error log.
-                 * @param {Error} error - The error object.
-                 * @param {string} [context='General'] - The context where the error occurred.
-                 */
-                logError(error, context = 'General') {
-                    console.error(`[${context}]`, error);
-                    const entry = `<div>${new Date().toLocaleTimeString()} [${context}]: ${error.message}</div>`;
-                    this.errors.push(entry);
-                    if (this.errors.length > 20) this.errors.shift();
-                    this.elements.errorLog.html(this.errors.join(''));
                 }
 
                 /** Updates the connection status indicator. */
@@ -376,7 +431,7 @@
                         sound.currentTime = 0;
                         sound.play();
                     } catch (e) {
-                        this.logError(e, "Audio");
+                        console.error("Audio playback failed:", e);
                     }
                 }
 
@@ -417,12 +472,12 @@
 
                 /** Clears all highlights from the board. */
                 clearAllHighlights() {
-                    this.elements.board.find('.square-55d63').removeClass('highlight-last-move highlight-selected highlight-check');
+                    $('#board').find('.square-55d63').removeClass('highlight-last-move highlight-selected highlight-check');
                 }
                 
                 /** Highlights the specified squares on the board. */
                 highlightSquares(className, ...squares) {
-                    squares.forEach(sq => this.elements.board.find(`.square-${sq}`).addClass(className));
+                    squares.forEach(sq => $('#board').find(`.square-${sq}`).addClass(className));
                 }
                 
                 /** Shows the game over overlay. */
@@ -484,7 +539,6 @@
                         isMyTurn: false, isGameOver: false, pendingMove: false,
                         selectedSquare: null
                     };
-                    this.idleTimer = null;
                     this.init();
                 }
 
@@ -492,8 +546,11 @@
                 init() {
                     try {
                         this.board = Chessboard('board', {
-                            draggable: false, position: 'start', onSquareClick: (sq) => this.onSquareClick(sq),
-                            onSnapEnd: () => this.board.position(this.game.fen())
+                            draggable: false, 
+                            position: 'start', 
+                            onSquareClick: (sq) => this.onSquareClick(sq),
+                            onSnapEnd: () => this.board.position(this.game.fen()),
+                            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
                         });
                         $(window).resize(() => this.board.resize());
                         this.ui.elements.createRoomBtn.on('click', () => this.socket.emit('createRoom'));
@@ -501,22 +558,19 @@
                             const roomCode = this.ui.elements.roomCodeInput.val().trim().toUpperCase();
                             if (roomCode) this.socket.emit('joinRoom', roomCode);
                         });
-                        this.startIdleTimer();
                     } catch (e) {
-                        this.ui.logError(e, "Initialization");
+                        console.error("Initialization error:", e);
                         this.ui.showMessage("A critical error occurred on startup.", "error");
                     }
                 }
 
                 // --- Board Interaction (Click-to-Move Logic) ---
                 onSquareClick(square) {
-                    this.resetIdleTimer();
                     if (this.state.isGameOver || !this.state.isMyTurn || this.state.pendingMove) {
                         return;
                     }
                     const piece = this.game.get(square);
 
-                    // If a square is already selected, try to move to the new square
                     if (this.state.selectedSquare) {
                         const from = this.state.selectedSquare;
                         const to = square;
@@ -524,7 +578,6 @@
                         this.ui.clearAllHighlights();
                         this.attemptMove(from, to);
                     } 
-                    // Otherwise, select the clicked square if it contains one of the player's pieces
                     else if (piece && piece.color === this.state.playerColor) {
                         this.state.selectedSquare = square;
                         this.ui.clearAllHighlights();
@@ -576,7 +629,7 @@
                         this.ui.clearAllHighlights();
                         this.ui.highlightSquares('highlight-last-move', data.from, data.to);
                     } else {
-                        this.ui.logError(new Error("Received an invalid move from server."), "Sync");
+                        console.error("Received an invalid move from server.");
                     }
                 }
                 onGameOver(message) {
@@ -598,7 +651,7 @@
                         this.updateStatusText();
                         this.highlightCheck();
                     } catch (e) {
-                        this.ui.logError(e, "UI Update");
+                        console.error("UI update failed:", e);
                     }
                 }
                 updateStatusText() {
@@ -625,20 +678,6 @@
                             }
                         }
                     }
-                }
-
-                // --- Timers ---
-                startIdleTimer() {
-                    $(document).on('click mousemove keydown', () => this.resetIdleTimer());
-                    this.resetIdleTimer();
-                }
-                resetIdleTimer() {
-                    clearTimeout(this.idleTimer);
-                    this.idleTimer = setTimeout(() => {
-                        this.socket.socket.disconnect();
-                        this.ui.logError(new Error("Disconnected due to inactivity."));
-                        this.ui.showMessage("Disconnected due to inactivity.", "error");
-                    }, 300000); // 5 minutes
                 }
             }
             
