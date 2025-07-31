@@ -75,6 +75,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .header-title h1 {
@@ -92,6 +93,7 @@
             font-weight: 500;
             font-size: 0.9em;
             text-align: right;
+            min-width: 180px;
         }
 
         .panel {
@@ -132,7 +134,7 @@
         #board {
             width: 100%;
             height: auto;
-            max-width: 70vh; /* Ensures the board remains a reasonable size on large screens */
+            max-width: 70vh;
             max-height: 70vh;
             box-shadow: var(--shadow);
             border-radius: 4px;
@@ -159,7 +161,7 @@
             border-radius: 4px;
             padding: 0.5rem;
             font-family: var(--font-family-mono);
-            font-size: 0.9rem;
+            font-size: 1rem;
             background-color: var(--history-bg-color);
         }
         
@@ -285,30 +287,6 @@
             text-align: center;
             color: var(--text-color);
             box-shadow: var(--shadow);
-        }
-
-        /* --- Small Screen/Mobile Layout (fallback) --- */
-        @media (max-width: 1023px) {
-            .app-container {
-                display: flex;
-                flex-direction: column;
-                gap: 1.5rem;
-            }
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-            .room-controls {
-                flex-direction: column;
-                width: 100%;
-            }
-            .room-controls input,
-            .room-controls button {
-                width: 100%;
-            }
-            .panel {
-                min-width: unset;
-            }
         }
     </style>
 </head>
