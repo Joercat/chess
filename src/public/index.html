@@ -157,18 +157,6 @@
             --button-hover-color: #f57c00;
         }
 
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: var(--font-family-main);
-            margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color var(--transition-speed), color var(--transition-speed);
-        }
-
         /* --- Fullscreen Mode Styling --- */
         body.fullscreen-mode {
             overflow: hidden; /* Prevents scrolling */
@@ -695,8 +683,17 @@
 
                 /** Binds all incoming socket events to controller methods. */
                 bindSocketEvents() {
-                    this.socket.on('connect', () => this.game.onConnect());
-                    this.socket.on('disconnect', () => this.game.onDisconnect());
+                    this.socket.on('connect', () => {
+                        this.game.onConnect();
+                        console.log("Socket.io: Connection established successfully.");
+                    });
+                    this.socket.on('disconnect', (reason) => {
+                        this.game.onDisconnect();
+                        console.log("Socket.io: Disconnected. Reason:", reason);
+                    });
+                    this.socket.on('connect_error', (err) => {
+                        console.error("Socket.io: Connection error.", err);
+                    });
                     this.socket.on('reconnecting', () => this.game.onReconnecting());
                     this.socket.on('roomCreated', data => this.game.onRoomCreated(data));
                     this.socket.on('gameStart', data => this.game.onGameStart(data));
