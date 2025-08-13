@@ -3,19 +3,19 @@ const http = require('http');
 const { Server } = require('socket.io');
 const { Chess } = require('chess.js');
 const sqlite3 = require('sqlite3');
-const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
 
 const pino = require('pino');
 const pinoHttp = require('pino-http');
-const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
+// The logger is now initialized without a level from process.env
+const logger = pino({ level: 'info' });
 
 // --- Configuration ---
-const PORT = process.env.PORT || 3000;
-const DATABASE_PATH = process.env.DATABASE_PATH || './chess_games.db';
-const PROD_ORIGIN = process.env.CORS_ORIGIN; // e.g., https://your-app-name.onrender.com
+// These values are now hardcoded or use a fallback
+const PORT = 3000;
+const DATABASE_PATH = './chess_games.db';
+const PROD_ORIGIN = null;
 
 const allowedOrigins = ['http://localhost:3000'];
 if (PROD_ORIGIN) {
@@ -38,20 +38,30 @@ const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
     db.run(sql, params, function (err) { (err) ? reject(err) : resolve(this); });
 });
 
-const initializeDB = async () => { /* ... (Same as before, no changes needed) ... */ };
-
+const initializeDB = async () => {
+    return dbRun(`
+        CREATE TABLE IF NOT EXISTS games (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            room_code TEXT NOT NULL UNIQUE,
+            status TEXT NOT NULL,
+            white_player_id TEXT,
+            black_player_id TEXT,
+            pgn TEXT,
+            result TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+};
 
 // --- Server and Middleware Setup ---
 const app = express();
-app.set('trust proxy', 1); // Crucial for Render
+app.set('trust proxy', 1);
 app.use(pinoHttp({ logger }));
-app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
-// --- Serving Your Frontend (No Edits Needed) ---
-// This one line serves all files from your 'public' directory.
-// Visiting your site's root URL will automatically serve 'public/index.html'.
+// --- Serving Your Frontend ---
 app.use(express.static('public'));
 
 // --- Health Check for Render ---
@@ -61,11 +71,15 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: allowedOrigins } });
 const rooms = {};
 
-const generateRoomCode = () => { /* ... (Same as before, no changes needed) ... */ };
+const generateRoomCode = () => {
+    let code;
+    do {
+        code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    } while (rooms[code]);
+    return code;
+};
 
 // --- Socket.io Handlers ---
-// All socket handlers (connection, createRoom, joinRoom, move, disconnect)
-// remain the same as the previous version. They are already secure and robust.
 io.on('connection', (socket) => {
     logger.info({ socketId: socket.id }, "User connected");
 
@@ -168,8 +182,27 @@ io.on('connection', (socket) => {
 });
 
 
-const startServer = async () => { /* ... (Same as before, no changes needed) ... */ };
-const gracefulShutdown = () => { /* ... (Same as before, no changes needed) ... */ };
+const startServer = async () => {
+    await initializeDB();
+    server.listen(PORT, () => {
+        logger.info({ origins: allowedOrigins }, `Server running on port ${PORT}`);
+    });
+};
+
+const gracefulShutdown = () => {
+    logger.info("Starting graceful shutdown...");
+    server.close(() => {
+        logger.info("Server closed.");
+        db.close((err) => {
+            if (err) {
+                logger.error({ err }, "Error closing database connection");
+            } else {
+                logger.info("Database connection closed.");
+            }
+            process.exit(err ? 1 : 0);
+        });
+    });
+};
 
 // Kick off the server start process
 (async () => {
